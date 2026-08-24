@@ -12,11 +12,13 @@
 use anyhow::Result;
 use omarchy_onboard_core::{Discovery, Plan, Platform, SourceContext, TargetContext, Topic};
 
+pub mod fonts;
 pub mod fs;
 pub mod homebrew;
 pub mod input;
 pub mod shell;
 pub mod ssh;
+pub mod terminal;
 pub mod vscode;
 
 pub fn all() -> Vec<Box<dyn Topic>> {
@@ -26,6 +28,8 @@ pub fn all() -> Vec<Box<dyn Topic>> {
         Box::new(ssh::Ssh),
         Box::new(input::Input),
         Box::new(vscode::VsCode),
+        Box::new(fonts::Fonts),
+        Box::new(terminal::Terminal),
     ]
 }
 

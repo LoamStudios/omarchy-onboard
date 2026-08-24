@@ -216,3 +216,84 @@ fn input_settings_become_one_hyprland_append() {
         [Operation::WriteConfig { path, content, mode: omarchy_onboard_core::ConfigMode::Append }]
             if path.ends_with(".config/hypr/input.conf") && content.contains("caps:ctrl_modifier") && content.contains("natural_scroll = false")));
 }
+
+#[test]
+fn terminal_config_is_rewritten_and_cross_checks_fonts() {
+    use omarchy_onboard_topics::{fonts, terminal};
+    let ghostty = Finding::new(terminal::ID, Group::Terminal, "ghostty", "g").with_value(
+        terminal::TerminalConfig {
+            emulator: terminal::Emulator::Ghostty,
+            content: "font-family = \"Berkeley Mono\"\nmacos-titlebar-style = \"tabs\"\n".into(),
+            font_family: Some("Berkeley Mono".into()),
+            font_size: Some(18.0),
+        },
+    );
+    let font = Finding::new(
+        fonts::ID,
+        Group::Fonts,
+        "family/berkeleymono",
+        "Berkeley Mono",
+    )
+    .with_value(fonts::Family {
+        name: "Berkeley Mono".into(),
+        file_count: 4,
+    })
+    .with_file(FileRef {
+        path: "/Users/u/Library/Fonts/BerkeleyMono-Regular.otf".into(),
+        kind: FileKind::File,
+        size: 1,
+    });
+    let iterm = Finding::new(terminal::ID, Group::Terminal, "iterm2", "i").with_value(
+        terminal::TerminalConfig {
+            emulator: terminal::Emulator::ITerm2,
+            content: String::new(),
+            font_family: None,
+            font_size: None,
+        },
+    );
+    let plan = plan_for(vec![ghostty, font, iterm], FakeIndex(vec![]));
+
+    let g = plan
+        .proposals
+        .iter()
+        .find(|p| p.id == "terminal/ghostty")
+        .unwrap();
+    assert!(g.is_action());
+    assert!(
+        matches!(&g.operations[..], [Operation::WriteConfig { path, content, .. }]
+        if path.ends_with(".config/ghostty/config") && !content.contains("macos-"))
+    );
+    assert!(g.rationale.contains("comes over via the Fonts topic"));
+
+    let f = plan
+        .proposals
+        .iter()
+        .find(|p| p.id == "fonts/berkeleymono")
+        .unwrap();
+    assert!(
+        matches!(&f.operations[..], [Operation::PullFiles { dest, .. }, Operation::RunCommand { .. }]
+        if dest.ends_with(".local/share/fonts/Berkeley Mono"))
+    );
+
+    let i = plan
+        .proposals
+        .iter()
+        .find(|p| p.id == "terminal/iterm2")
+        .unwrap();
+    assert!(!i.is_action());
+}
+
+#[test]
+fn packaged_font_is_installed_not_copied() {
+    use omarchy_onboard_topics::fonts;
+    let f = Finding::new(fonts::ID, Group::Fonts, "family/firacode", "Fira Code").with_value(
+        fonts::Family {
+            name: "Fira Code".into(),
+            file_count: 6,
+        },
+    );
+    let plan = plan_for(vec![f], FakeIndex(vec![]));
+    assert!(
+        matches!(&plan.proposals[0].operations[..], [Operation::InstallPackages { packages }] if packages[0].name == "ttf-fira-code")
+    );
+}
