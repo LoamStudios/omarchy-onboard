@@ -2,7 +2,7 @@
 
 use crate::fs::file_ref;
 use anyhow::Result;
-use omam_core::{Check, CheckMeta, Finding, Group, Platform, SourceContext};
+use omarchy_migrate_core::{Check, CheckMeta, Finding, Group, Platform, SourceContext};
 use serde::{Deserialize, Serialize};
 
 pub const ID: &str = "macos.shell";

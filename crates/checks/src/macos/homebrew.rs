@@ -1,7 +1,7 @@
 //! Installed Homebrew formulae and casks.
 
 use anyhow::{Context, Result};
-use omam_core::{Check, CheckMeta, Finding, Group, Platform, SourceContext};
+use omarchy_migrate_core::{Check, CheckMeta, Finding, Group, Platform, SourceContext};
 use serde::{Deserialize, Serialize};
 use std::process::Command;
 

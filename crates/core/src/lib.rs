@@ -7,7 +7,7 @@
 //! 3. **Migrate** — an [`Executor`] applies accepted operations on the target.
 //!
 //! Nothing here knows about macOS, Windows, or Omarchy specifically; those live in
-//! `omam-checks` (source side) and `omam-rules` (target side).
+//! `omarchy-migrate-checks` (source side) and `omarchy-migrate-rules` (target side).
 
 pub mod check;
 pub mod discovery;

@@ -1,4 +1,4 @@
-use omam_core::{Package, PackageSource};
+use omarchy_migrate_core::{Package, PackageSource};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::sync::LazyLock;

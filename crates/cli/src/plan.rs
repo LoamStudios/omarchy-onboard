@@ -2,7 +2,7 @@ use crate::{scan, ui};
 use anyhow::{Context, Result};
 use console::style;
 use demand::{DemandOption, MultiSelect};
-use omam_core::{Decision, Discovery, Operation, Plan, Platform, Proposal, TargetContext};
+use omarchy_migrate_core::{Decision, Discovery, Operation, Plan, Platform, Proposal, TargetContext};
 use std::path::Path;
 
 pub fn plan(discovery: &Path, local: bool, out: &Path, yes: bool) -> Result<()> {
@@ -10,7 +10,7 @@ pub fn plan(discovery: &Path, local: bool, out: &Path, yes: bool) -> Result<()> 
         scan::discover(&[])?
     } else {
         let s = std::fs::read_to_string(discovery)
-            .with_context(|| format!("reading {} (run `omam scan` first, or pass --local)", discovery.display()))?;
+            .with_context(|| format!("reading {} (run `omarchy-migrate scan` first, or pass --local)", discovery.display()))?;
         serde_json::from_str(&s)?
     };
 
@@ -18,7 +18,7 @@ pub fn plan(discovery: &Path, local: bool, out: &Path, yes: bool) -> Result<()> 
         platform: Platform::current(),
         home: std::env::var_os("HOME").map(Into::into).unwrap_or_default(),
     };
-    let mut plan = omam_rules::propose(&discovery, &ctx);
+    let mut plan = omarchy_migrate_rules::propose(&discovery, &ctx);
 
     if plan.proposals.is_empty() {
         println!("Nothing to propose.");

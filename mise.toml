@@ -14,8 +14,8 @@ run = ["cargo fmt --all --check", "cargo clippy --workspace --all-targets -- -D 
 
 [tasks.scan]
 description = "Run all checks against this machine and print findings"
-run = "cargo run -q -p omam -- scan"
+run = "cargo run -q -p omarchy-migrate -- scan"
 
 [tasks.plan]
 description = "Run checks locally and print what would be proposed"
-run = "cargo run -q -p omam -- plan --local"
+run = "cargo run -q -p omarchy-migrate -- plan --local"

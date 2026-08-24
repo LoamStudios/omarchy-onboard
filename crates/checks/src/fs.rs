@@ -1,6 +1,6 @@
 //! Helpers shared by checks that reference files.
 
-use omam_core::{FileKind, FileRef};
+use omarchy_migrate_core::{FileKind, FileRef};
 use std::path::Path;
 
 /// Build a `FileRef` for `path` if it exists, computing recursive size for dirs.

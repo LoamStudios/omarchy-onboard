@@ -1,8 +1,8 @@
 //! Homebrew formulae/casks → target packages.
 
 use crate::maps;
-use omam_checks::macos::homebrew::{self, BrewPackage};
-use omam_core::{Decision, Discovery, Group, Operation, Package, PackageSource, Proposal, Rule, TargetContext};
+use omarchy_migrate_checks::macos::homebrew::{self, BrewPackage};
+use omarchy_migrate_core::{Decision, Discovery, Group, Operation, Package, PackageSource, Proposal, Rule, TargetContext};
 
 pub struct HomebrewToPacman;
 

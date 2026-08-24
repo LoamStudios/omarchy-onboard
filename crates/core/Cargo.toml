@@ -1,5 +1,5 @@
 [package]
-name = "omam-core"
+name = "omarchy-migrate-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

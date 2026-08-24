@@ -1,13 +1,13 @@
-//! `omam` — Omarchy migration assistant.
+//! `omarchy-migrate` — Omarchy migration assistant.
 //!
-//! Source machine:  `omam serve`           (advertise, wait for a pair request)
-//! Target machine:  `omam migrate <code>`  (discover → propose → migrate)
+//! Source machine:  `omarchy-migrate serve`           (advertise, wait for a pair request)
+//! Target machine:  `omarchy-migrate migrate <code>`  (discover → propose → migrate)
 //!
 //! Either machine, offline:
-//!   `omam checks`             list what Discover can look at
-//!   `omam scan`               run checks here, write discovery.json
-//!   `omam plan`               propose from a discovery, decide, write plan.json
-//!   `omam apply --dry-run`    show what Migrate would do
+//!   `omarchy-migrate checks`             list what Discover can look at
+//!   `omarchy-migrate scan`               run checks here, write discovery.json
+//!   `omarchy-migrate plan`               propose from a discovery, decide, write plan.json
+//!   `omarchy-migrate apply --dry-run`    show what Migrate would do
 
 mod apply;
 mod plan;
@@ -19,7 +19,7 @@ use clap::{CommandFactory, Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "omam", version, about = "Omarchy migration assistant")]
+#[command(name = "omarchy-migrate", version, about = "Omarchy migration assistant")]
 struct Cli {
     #[command(subcommand)]
     cmd: Cmd,
@@ -69,7 +69,7 @@ enum Cmd {
     Serve,
     /// Run on the target machine: pair with a source and migrate from it.
     Migrate {
-        /// Pairing code shown by `omam serve`.
+        /// Pairing code shown by `omarchy-migrate serve`.
         code: String,
     },
     /// Print the usage spec (for completions and docs).
@@ -88,11 +88,11 @@ fn main() -> Result<()> {
         Cmd::Scan { out, check } => scan::scan(&out, &check),
         Cmd::Plan { discovery, local, out, yes } => plan::plan(&discovery, local, &out, yes),
         Cmd::Apply { plan, dry_run } => apply::apply(&plan, dry_run),
-        Cmd::Serve => anyhow::bail!("pairing transport not implemented yet — use `omam scan` and copy discovery.json"),
-        Cmd::Migrate { .. } => anyhow::bail!("pairing transport not implemented yet — use `omam plan --discovery <file>`"),
+        Cmd::Serve => anyhow::bail!("pairing transport not implemented yet — use `omarchy-migrate scan` and copy discovery.json"),
+        Cmd::Migrate { .. } => anyhow::bail!("pairing transport not implemented yet — use `omarchy-migrate plan --discovery <file>`"),
         Cmd::Usage => {
             let mut buf = Vec::new();
-            clap_usage::generate(&mut Cli::command(), "omam", &mut buf);
+            clap_usage::generate(&mut Cli::command(), "omarchy-migrate", &mut buf);
             print!("{}", String::from_utf8(buf)?);
             Ok(())
         }

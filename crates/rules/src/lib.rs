@@ -5,7 +5,7 @@
 //! in TOML tables under `maps/`, embedded at compile time, so contributors can
 //! extend coverage without touching Rust.
 
-use omam_core::{Discovery, Plan, Rule, TargetContext};
+use omarchy_migrate_core::{Discovery, Plan, Rule, TargetContext};
 
 pub mod maps;
 pub mod packages;
