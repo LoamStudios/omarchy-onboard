@@ -1,13 +1,17 @@
 [package]
-name = "omarchy-onboard-rules"
+name = "omarchy-onboard-topics"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
 omarchy-onboard-core.workspace = true
-omarchy-onboard-checks.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
+tracing.workspace = true
 toml = "0.9"
+walkdir = "2"
+
+[dev-dependencies]
+tempfile = "3"

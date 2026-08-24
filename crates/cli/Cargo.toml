@@ -10,8 +10,7 @@ path = "src/main.rs"
 
 [dependencies]
 omarchy-onboard-core.workspace = true
-omarchy-onboard-checks.workspace = true
-omarchy-onboard-rules.workspace = true
+omarchy-onboard-topics.workspace = true
 omarchy-onboard-target.workspace = true
 omarchy-onboard-net.workspace = true
 tokio.workspace = true

@@ -1,6 +1,6 @@
-use crate::code::PairingCode;
-use crate::protocol::{CheckInfo, Request, Response, read_msg, write_msg};
 use crate::ALPN;
+use crate::code::PairingCode;
+use crate::protocol::{Request, Response, TopicInfo, read_msg, write_msg};
 use anyhow::{Context, Result};
 use iroh::endpoint::{Connection, presets};
 use iroh::{Endpoint, RelayMode};
@@ -12,14 +12,17 @@ use std::sync::Arc;
 pub trait Source: Send + Sync + 'static {
     fn host(&self) -> String;
     fn platform(&self) -> omarchy_onboard_core::Platform;
-    fn checks(&self) -> Vec<CheckInfo>;
+    fn topics(&self) -> Vec<TopicInfo>;
     fn discover(&self, only: &[String]) -> Result<Discovery>;
 }
 
 /// Advertise on the LAN and answer one paired target at a time. Returns when
 /// the paired target disconnects.
 pub async fn serve(code: PairingCode, source: Arc<dyn Source>) -> Result<()> {
-    let user_data: iroh::address_lookup::UserData = code.discovery_tag().parse().map_err(|e| anyhow::anyhow!("{e:?}"))?;
+    let user_data: iroh::address_lookup::UserData = code
+        .discovery_tag()
+        .parse()
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?;
     let endpoint = Endpoint::builder(presets::Minimal)
         .relay_mode(RelayMode::Disabled)
         .alpns(vec![ALPN.to_vec()])
@@ -31,7 +34,9 @@ pub async fn serve(code: PairingCode, source: Arc<dyn Source>) -> Result<()> {
     tracing::info!(id = %endpoint.id(), "serving");
 
     loop {
-        let Some(incoming) = endpoint.accept().await else { break };
+        let Some(incoming) = endpoint.accept().await else {
+            break;
+        };
         let conn = match incoming.await {
             Ok(c) => c,
             Err(e) => {
@@ -50,7 +55,11 @@ pub async fn serve(code: PairingCode, source: Arc<dyn Source>) -> Result<()> {
 }
 
 /// Returns `Ok(true)` once a paired session completes.
-async fn handle_connection(conn: Connection, code: &PairingCode, source: Arc<dyn Source>) -> Result<bool> {
+async fn handle_connection(
+    conn: Connection,
+    code: &PairingCode,
+    source: Arc<dyn Source>,
+) -> Result<bool> {
     // First stream must carry a valid Hello.
     let (mut send, mut recv) = conn.accept_bi().await?;
     let Request::Hello { proof } = read_msg::<Request>(&mut recv).await? else {
@@ -64,7 +73,14 @@ async fn handle_connection(conn: Connection, code: &PairingCode, source: Arc<dyn
         conn.close(1u32.into(), b"bad code");
         return Ok(false);
     }
-    write_msg(&mut send, &Response::Hello { host: source.host(), platform: source.platform() }).await?;
+    write_msg(
+        &mut send,
+        &Response::Hello {
+            host: source.host(),
+            platform: source.platform(),
+        },
+    )
+    .await?;
     send.finish()?;
     eprintln!("Paired with {}", conn.remote_id().fmt_short());
 
@@ -83,11 +99,15 @@ async fn handle_connection(conn: Connection, code: &PairingCode, source: Arc<dyn
     }
 }
 
-async fn handle_request(req: Request, source: &Arc<dyn Source>, send: &mut iroh::endpoint::SendStream) -> Result<()> {
+async fn handle_request(
+    req: Request,
+    source: &Arc<dyn Source>,
+    send: &mut iroh::endpoint::SendStream,
+) -> Result<()> {
     match req {
         Request::Hello { .. } => anyhow::bail!("duplicate Hello"),
-        Request::ListChecks => write_msg(send, &Response::Checks(source.checks())).await,
-        Request::RunChecks { only } => {
+        Request::ListTopics => write_msg(send, &Response::Topics(source.topics())).await,
+        Request::Discover { only } => {
             let src = source.clone();
             let d = tokio::task::spawn_blocking(move || src.discover(&only)).await??;
             write_msg(send, &Response::Discovery(Box::new(d))).await
@@ -124,7 +144,9 @@ struct ChannelWriter(tokio::sync::mpsc::Sender<Vec<u8>>);
 
 impl std::io::Write for ChannelWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.0.blocking_send(buf.to_vec()).map_err(|_| std::io::Error::other("receiver gone"))?;
+        self.0
+            .blocking_send(buf.to_vec())
+            .map_err(|_| std::io::Error::other("receiver gone"))?;
         Ok(buf.len())
     }
     fn flush(&mut self) -> std::io::Result<()> {

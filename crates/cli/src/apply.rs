@@ -3,7 +3,7 @@
 use crate::{migrate, plan::describe, ui};
 use anyhow::{Context, Result};
 use console::style;
-use omarchy_onboard_core::{FileRef, Plan};
+use omarchy_onboard_core::{FileRef, Plan, Proposal};
 use omarchy_onboard_target::{Executor, FileSource, Outcome};
 use std::path::Path;
 
@@ -11,7 +11,7 @@ pub fn apply(path: &Path, dry_run: bool, code: Option<&str>) -> Result<()> {
     let plan: Plan = serde_json::from_str(
         &std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?,
     )?;
-    let needs_source = plan.accepted().any(|p| p.operation.needs_source_files());
+    let needs_source = plan.accepted().any(Proposal::needs_source_files);
     match (needs_source && !dry_run, code) {
         (true, Some(code)) => {
             let mut client = migrate::connect(code)?;
@@ -19,7 +19,9 @@ pub fn apply(path: &Path, dry_run: bool, code: Option<&str>) -> Result<()> {
             client.close();
             Ok(())
         }
-        (true, None) => anyhow::bail!("plan pulls files from the source; pass --code <pairing code>"),
+        (true, None) => {
+            anyhow::bail!("plan pulls files from the source; pass --code <pairing code>")
+        }
         _ => run(&plan, dry_run, &mut NoSource),
     }
 }
@@ -30,9 +32,11 @@ pub fn run(plan: &Plan, dry_run: bool, files: &mut dyn FileSource) -> Result<()>
     let mut failed = 0;
     for p in plan.accepted() {
         print!("{} {} … ", style("▸").cyan(), p.title);
-        match exec.apply(&p.operation, files) {
+        match exec.apply_all(&p.operations, files) {
             Ok(Outcome::Done) => println!("{}", style("done").green()),
-            Ok(Outcome::Skipped(why)) => println!("{} ({why}: {})", style("skipped").dim(), describe(p)),
+            Ok(Outcome::Skipped(why)) => {
+                println!("{} ({why}: {})", style("skipped").dim(), describe(p))
+            }
             Ok(Outcome::Manual(text)) => {
                 println!("{}", style("manual").yellow());
                 manual.push((p.title.clone(), text));

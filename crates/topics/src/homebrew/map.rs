@@ -28,16 +28,26 @@ pub enum Equivalent {
 impl Equivalent {
     pub fn package(&self) -> Option<Package> {
         match self {
-            Equivalent::Name(n) => Some(Package { name: n.clone(), source: PackageSource::Pacman }),
-            Equivalent::Full { pacman: Some(n), .. } => {
-                Some(Package { name: n.clone(), source: PackageSource::Pacman })
-            }
-            Equivalent::Full { aur: Some(n), .. } => {
-                Some(Package { name: n.clone(), source: PackageSource::Aur })
-            }
-            Equivalent::Full { installer: Some(n), .. } => {
-                Some(Package { name: n.clone(), source: PackageSource::DistroInstaller })
-            }
+            Equivalent::Name(n) => Some(Package {
+                name: n.clone(),
+                source: PackageSource::Pacman,
+            }),
+            Equivalent::Full {
+                pacman: Some(n), ..
+            } => Some(Package {
+                name: n.clone(),
+                source: PackageSource::Pacman,
+            }),
+            Equivalent::Full { aur: Some(n), .. } => Some(Package {
+                name: n.clone(),
+                source: PackageSource::Aur,
+            }),
+            Equivalent::Full {
+                installer: Some(n), ..
+            } => Some(Package {
+                name: n.clone(),
+                source: PackageSource::DistroInstaller,
+            }),
             Equivalent::Full { .. } => None,
         }
     }
@@ -66,7 +76,7 @@ struct MapFile {
 }
 
 static HOMEBREW: LazyLock<MapFile> =
-    LazyLock::new(|| toml::from_str(include_str!("homebrew.toml")).expect("maps/homebrew.toml is valid"));
+    LazyLock::new(|| toml::from_str(include_str!("map.toml")).expect("homebrew/map.toml is valid"));
 
 pub fn formula(name: &str) -> Option<&'static Equivalent> {
     HOMEBREW.formula.get(name)

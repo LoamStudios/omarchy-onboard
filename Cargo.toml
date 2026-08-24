@@ -10,8 +10,7 @@ repository = "https://github.com/LoamStudios/omarchy-onboard"
 
 [workspace.dependencies]
 omarchy-onboard-core = { path = "crates/core" }
-omarchy-onboard-checks = { path = "crates/checks" }
-omarchy-onboard-rules = { path = "crates/rules" }
+omarchy-onboard-topics = { path = "crates/topics" }
 omarchy-onboard-target = { path = "crates/target" }
 omarchy-onboard-net = { path = "crates/net" }
 serde = { version = "1", features = ["derive"] }

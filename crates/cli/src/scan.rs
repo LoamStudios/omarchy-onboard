@@ -4,49 +4,49 @@ use omarchy_onboard_core::{Discovery, Platform, SourceContext};
 use std::collections::BTreeMap;
 use std::path::Path;
 
-pub fn list_checks(all: bool) -> Result<()> {
+pub fn list_topics(all: bool) -> Result<()> {
     let platform = Platform::current();
-    let checks = if all { omarchy_onboard_checks::all() } else { omarchy_onboard_checks::for_platform(platform) };
-    ui::heading(&format!("Checks{}", if all { "" } else { " for this machine" }));
+    let topics = if all {
+        omarchy_onboard_topics::all()
+    } else {
+        omarchy_onboard_topics::for_source(platform)
+    };
+    ui::heading(&format!(
+        "Topics{}",
+        if all {
+            ""
+        } else {
+            " this machine can be read for"
+        }
+    ));
     let mut by_group: BTreeMap<_, Vec<_>> = BTreeMap::new();
-    for c in &checks {
-        by_group.entry(c.meta().group).or_default().push(c.meta());
+    for t in &topics {
+        by_group.entry(t.meta().group).or_default().push(t.meta());
     }
     for (group, metas) in by_group {
         ui::group(group.title(), &metas.len().to_string());
         for m in metas {
-            ui::item(&format!("{}  {}", console::style(m.id).green(), m.title));
+            let sources: Vec<String> = m
+                .sources
+                .iter()
+                .map(|p| format!("{p:?}").to_lowercase())
+                .collect();
+            ui::item(&format!(
+                "{}  {}  {}",
+                console::style(m.id).green(),
+                m.title,
+                console::style(format!("[{}]", sources.join(", "))).dim()
+            ));
             ui::note(m.description);
         }
     }
     Ok(())
 }
 
-/// Run every applicable check on this machine.
+/// Run every applicable topic on this machine.
 pub fn discover(only: &[String]) -> Result<Discovery> {
     let ctx = SourceContext::current()?;
-    let mut discovery = Discovery {
-        source_platform: ctx.platform,
-        source_host: hostname(),
-        checks_run: vec![],
-        checks_failed: BTreeMap::new(),
-        findings: vec![],
-    };
-    for check in omarchy_onboard_checks::for_platform(ctx.platform) {
-        let id = check.meta().id;
-        if !only.is_empty() && !only.iter().any(|o| o == id) {
-            continue;
-        }
-        tracing::info!(check = id, "running");
-        discovery.checks_run.push(id.to_string());
-        match check.run(&ctx) {
-            Ok(f) => discovery.findings.extend(f),
-            Err(e) => {
-                discovery.checks_failed.insert(id.to_string(), format!("{e:#}"));
-            }
-        }
-    }
-    Ok(discovery)
+    omarchy_onboard_topics::discover(&ctx, &hostname(), only)
 }
 
 pub fn scan(out: &Path, only: &[String]) -> Result<()> {
@@ -54,20 +54,27 @@ pub fn scan(out: &Path, only: &[String]) -> Result<()> {
     print_discovery(&discovery);
     std::fs::write(out, serde_json::to_string_pretty(&discovery)?)
         .with_context(|| format!("writing {}", out.display()))?;
-    println!("\nWrote {} findings to {}", discovery.findings.len(), out.display());
+    println!(
+        "\nWrote {} findings to {}",
+        discovery.findings.len(),
+        out.display()
+    );
     Ok(())
 }
 
 pub fn print_discovery(d: &Discovery) {
-    ui::heading(&format!("Discovered on {} ({:?})", d.source_host, d.source_platform));
+    ui::heading(&format!(
+        "Discovered on {} ({:?})",
+        d.source_host, d.source_platform
+    ));
     for (group, findings) in d.by_group() {
         ui::group(group.title(), &findings.len().to_string());
         for f in findings {
             ui::item(&f.title);
         }
     }
-    for (check, err) in &d.checks_failed {
-        println!("{} {check}: {err}", console::style("failed").red());
+    for (topic, err) in &d.topics_failed {
+        println!("{} {topic}: {err}", console::style("failed").red());
     }
 }
 

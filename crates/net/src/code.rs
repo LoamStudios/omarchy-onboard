@@ -14,21 +14,32 @@ impl PairingCode {
     pub fn generate() -> Self {
         use rand::Rng;
         let mut rng = rand::rng();
-        let s: String = (0..LEN).map(|_| ALPHABET[rng.random_range(0..ALPHABET.len())] as char).collect();
+        let s: String = (0..LEN)
+            .map(|_| ALPHABET[rng.random_range(0..ALPHABET.len())] as char)
+            .collect();
         Self(s)
     }
 
     /// Accepts any case, with or without the dash.
     pub fn parse(s: &str) -> anyhow::Result<Self> {
-        let s: String = s.chars().filter(|c| c.is_ascii_alphanumeric()).map(|c| c.to_ascii_uppercase()).collect();
+        let s: String = s
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .map(|c| c.to_ascii_uppercase())
+            .collect();
         anyhow::ensure!(s.len() == LEN, "pairing code must be {LEN} characters");
-        anyhow::ensure!(s.bytes().all(|b| ALPHABET.contains(&b)), "pairing code has invalid characters");
+        anyhow::ensure!(
+            s.bytes().all(|b| ALPHABET.contains(&b)),
+            "pairing code has invalid characters"
+        );
         Ok(Self(s))
     }
 
     /// Public tag broadcast over mDNS so the target can find the right source.
     pub fn discovery_tag(&self) -> String {
-        let h = Sha256::new_with_prefix(b"omarchy-onboard/tag/").chain_update(self.0.as_bytes()).finalize();
+        let h = Sha256::new_with_prefix(b"omarchy-onboard/tag/")
+            .chain_update(self.0.as_bytes())
+            .finalize();
         format!("oo1-{}", hex(&h[..8]))
     }
 

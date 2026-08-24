@@ -9,11 +9,11 @@ use std::collections::BTreeMap;
 pub struct Discovery {
     pub source_platform: Platform,
     pub source_host: String,
-    /// Check ids that ran (including those that found nothing).
-    pub checks_run: Vec<String>,
-    /// Check id → error message, for checks that failed.
+    /// Topic ids that ran (including those that found nothing).
+    pub topics_run: Vec<String>,
+    /// Topic id → error message, for topics that failed.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub checks_failed: BTreeMap<String, String>,
+    pub topics_failed: BTreeMap<String, String>,
     pub findings: Vec<Finding>,
 }
 
@@ -26,7 +26,17 @@ impl Discovery {
         map
     }
 
-    pub fn for_check<'a>(&'a self, check: &str) -> impl Iterator<Item = &'a Finding> {
-        self.findings.iter().filter(move |f| f.check == check)
+    pub fn for_topic<'a>(&'a self, topic: &str) -> impl Iterator<Item = &'a Finding> {
+        self.findings.iter().filter(move |f| f.topic == topic)
+    }
+
+    pub fn new(source_platform: Platform, source_host: impl Into<String>) -> Self {
+        Self {
+            source_platform,
+            source_host: source_host.into(),
+            topics_run: Vec::new(),
+            topics_failed: BTreeMap::new(),
+            findings: Vec::new(),
+        }
     }
 }

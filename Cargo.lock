@@ -2381,28 +2381,15 @@ dependencies = [
  "clap_usage",
  "console",
  "demand",
- "omarchy-onboard-checks",
  "omarchy-onboard-core",
  "omarchy-onboard-net",
- "omarchy-onboard-rules",
  "omarchy-onboard-target",
+ "omarchy-onboard-topics",
  "serde",
  "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "omarchy-onboard-checks"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "omarchy-onboard-core",
- "serde",
- "serde_json",
- "tracing",
- "walkdir",
 ]
 
 [[package]]
@@ -2430,20 +2417,9 @@ dependencies = [
  "serde_json",
  "sha2 0.10.9",
  "tar",
+ "tempfile",
  "tokio",
  "tracing",
-]
-
-[[package]]
-name = "omarchy-onboard-rules"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "omarchy-onboard-checks",
- "omarchy-onboard-core",
- "serde",
- "serde_json",
- "toml",
 ]
 
 [[package]]
@@ -2452,7 +2428,22 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "omarchy-onboard-core",
+ "tempfile",
  "tracing",
+]
+
+[[package]]
+name = "omarchy-onboard-topics"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "omarchy-onboard-core",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "toml",
+ "tracing",
+ "walkdir",
 ]
 
 [[package]]
@@ -3517,6 +3508,19 @@ dependencies = [
  "filetime",
  "libc",
  "xattr",
+]
+
+[[package]]
+name = "tempfile"
+version = "3.27.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
+dependencies = [
+ "fastrand",
+ "getrandom 0.4.3",
+ "once_cell",
+ "rustix",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

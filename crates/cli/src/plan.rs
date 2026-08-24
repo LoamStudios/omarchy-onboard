@@ -2,17 +2,29 @@ use crate::{scan, ui};
 use anyhow::{Context, Result};
 use console::style;
 use demand::{DemandOption, MultiSelect};
-use omarchy_onboard_core::{Decision, Discovery, NoIndex, Operation, PackageIndex, Plan, Platform, Proposal, TargetContext};
+use omarchy_onboard_core::{
+    Decision, Discovery, NoIndex, Operation, PackageIndex, Plan, Proposal, TargetContext,
+};
 use omarchy_onboard_target::{ListIndex, PacmanIndex};
 use std::path::Path;
 use std::sync::Arc;
 
-pub fn plan(discovery: &Path, local: bool, out: &Path, yes: bool, packages: Option<&Path>) -> Result<()> {
+pub fn plan(
+    discovery: &Path,
+    local: bool,
+    out: &Path,
+    yes: bool,
+    packages: Option<&Path>,
+) -> Result<()> {
     let discovery: Discovery = if local {
         scan::discover(&[])?
     } else {
-        let s = std::fs::read_to_string(discovery)
-            .with_context(|| format!("reading {} (run `omarchy-onboard scan` first, or pass --local)", discovery.display()))?;
+        let s = std::fs::read_to_string(discovery).with_context(|| {
+            format!(
+                "reading {} (run `omarchy-onboard scan` first, or pass --local)",
+                discovery.display()
+            )
+        })?;
         serde_json::from_str(&s)?
     };
 
@@ -33,28 +45,32 @@ pub fn plan(discovery: &Path, local: bool, out: &Path, yes: bool, packages: Opti
     print_plan(&plan);
     std::fs::write(out, serde_json::to_string_pretty(&plan)?)?;
     let accepted = plan.accepted().count();
-    println!("\nWrote plan with {accepted}/{} accepted to {}", plan.proposals.len(), out.display());
+    println!(
+        "\nWrote plan with {accepted}/{} accepted to {}",
+        plan.proposals.len(),
+        out.display()
+    );
     Ok(())
 }
 
-/// Build the target context (live pacman index on Arch, a list file, or nothing) and run rules.
+/// Build the target context (live pacman index on Arch, a list file, or nothing) and run topics.
 pub fn propose(discovery: &Discovery, packages: Option<&Path>) -> Result<Plan> {
     let index: Arc<dyn PackageIndex> = match packages {
-        Some(p) => Arc::new(ListIndex::from_file(p).with_context(|| format!("reading {}", p.display()))?),
+        Some(p) => {
+            Arc::new(ListIndex::from_file(p).with_context(|| format!("reading {}", p.display()))?)
+        }
         None => match PacmanIndex::load() {
             Ok(i) => Arc::new(i),
             Err(e) => {
-                tracing::warn!("no pacman index ({e:#}); unmapped packages will be proposed as manual");
+                tracing::warn!(
+                    "no pacman index ({e:#}); unmapped packages will be proposed as manual"
+                );
                 Arc::new(NoIndex)
             }
         },
     };
-    let ctx = TargetContext {
-        platform: Platform::current(),
-        home: std::env::var_os("HOME").map(Into::into).unwrap_or_default(),
-        packages: index,
-    };
-    Ok(omarchy_onboard_rules::propose(discovery, &ctx))
+    let ctx = TargetContext::current(index)?;
+    Ok(omarchy_onboard_topics::propose(discovery, &ctx))
 }
 
 /// One multi-select per group; the proposal's default sets the initial checkbox.
@@ -77,7 +93,11 @@ pub fn decide_interactively(plan: &mut Plan) -> Result<()> {
     }
     let all_ids: Vec<String> = plan.proposals.iter().map(|p| p.id.clone()).collect();
     for id in all_ids {
-        let d = if chosen.contains(&id) { Decision::Accept } else { Decision::Skip };
+        let d = if chosen.contains(&id) {
+            Decision::Accept
+        } else {
+            Decision::Skip
+        };
         plan.decide(&id, d);
     }
     Ok(())
@@ -86,7 +106,10 @@ pub fn decide_interactively(plan: &mut Plan) -> Result<()> {
 pub fn print_plan(plan: &Plan) {
     ui::heading("Plan");
     for (group, proposals) in plan.by_group() {
-        let accepted = proposals.iter().filter(|p| plan.decision(p) == Decision::Accept).count();
+        let accepted = proposals
+            .iter()
+            .filter(|p| plan.decision(p) == Decision::Accept)
+            .count();
         ui::group(group.title(), &format!("{accepted}/{}", proposals.len()));
         for p in proposals {
             let mark = match plan.decision(p) {
@@ -100,16 +123,34 @@ pub fn print_plan(plan: &Plan) {
 }
 
 pub fn describe(p: &Proposal) -> String {
-    match &p.operation {
+    p.operations
+        .iter()
+        .map(describe_op)
+        .collect::<Vec<_>>()
+        .join("; ")
+}
+
+fn describe_op(op: &Operation) -> String {
+    match op {
         Operation::InstallPackages { packages } => {
-            let names: Vec<_> = packages.iter().map(|p| format!("{} [{:?}]", p.name, p.source)).collect();
+            let names: Vec<_> = packages
+                .iter()
+                .map(|p| format!("{} [{:?}]", p.name, p.source))
+                .collect();
             format!("install {}", names.join(", "))
         }
-        Operation::InstallEditorExtension { editor, extension } => format!("{editor}: install extension {extension}"),
+        Operation::InstallEditorExtension { editor, extension } => {
+            format!("{editor}: install extension {extension}")
+        }
         Operation::PullFiles { items, dest, mode } => {
             let size: u64 = items.iter().map(|i| i.size).sum();
             let m = mode.map(|m| format!(" mode {m:o}")).unwrap_or_default();
-            format!("pull {} item(s), {} → {}{m}", items.len(), ui::human_bytes(size), dest.display())
+            format!(
+                "pull {} item(s), {} → {}{m}",
+                items.len(),
+                ui::human_bytes(size),
+                dest.display()
+            )
         }
         Operation::WriteConfig { path, mode, .. } => format!("write {} ({mode:?})", path.display()),
         Operation::SetTheme { name } => format!("set theme {name}"),

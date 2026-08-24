@@ -27,7 +27,11 @@ pub enum Operation {
     },
 
     /// Write or merge a config file on the target.
-    WriteConfig { path: PathBuf, content: String, mode: ConfigMode },
+    WriteConfig {
+        path: PathBuf,
+        content: String,
+        mode: ConfigMode,
+    },
 
     /// Apply a named target theme.
     SetTheme { name: String },

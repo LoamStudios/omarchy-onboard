@@ -8,7 +8,11 @@ pub fn connect(code: &str) -> Result<Client> {
     let code = PairingCode::parse(code)?;
     println!("Looking for a source with code {code} on the local network…");
     let client = Client::pair(&code, Duration::from_secs(30))?;
-    println!("Paired with {} ({:?})", console::style(&client.host).bold(), client.platform);
+    println!(
+        "Paired with {} ({:?})",
+        console::style(&client.host).bold(),
+        client.platform
+    );
     Ok(client)
 }
 

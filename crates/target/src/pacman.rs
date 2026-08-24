@@ -16,9 +16,20 @@ impl PacmanIndex {
     pub fn load() -> anyhow::Result<Self> {
         let out = Command::new("pacman").args(["-Slq"]).output()?;
         anyhow::ensure!(out.status.success(), "pacman -Slq failed");
-        let repo = String::from_utf8_lossy(&out.stdout).lines().map(str::to_string).collect();
-        let have_yay = Command::new("yay").arg("--version").output().map(|o| o.status.success()).unwrap_or(false);
-        Ok(Self { repo, aur_cache: Mutex::new(Default::default()), have_yay })
+        let repo = String::from_utf8_lossy(&out.stdout)
+            .lines()
+            .map(str::to_string)
+            .collect();
+        let have_yay = Command::new("yay")
+            .arg("--version")
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false);
+        Ok(Self {
+            repo,
+            aur_cache: Mutex::new(Default::default()),
+            have_yay,
+        })
     }
 
     fn in_aur(&self, name: &str) -> bool {
@@ -57,7 +68,12 @@ pub struct ListIndex(HashSet<String>);
 impl ListIndex {
     pub fn from_file(path: &Path) -> anyhow::Result<Self> {
         let s = std::fs::read_to_string(path)?;
-        Ok(Self(s.lines().map(|l| l.trim().to_string()).filter(|l| !l.is_empty()).collect()))
+        Ok(Self(
+            s.lines()
+                .map(|l| l.trim().to_string())
+                .filter(|l| !l.is_empty())
+                .collect(),
+        ))
     }
 }
 

@@ -23,23 +23,54 @@ pub struct Executor {
 }
 
 impl Executor {
-    pub fn apply(&self, op: &Operation, files: &mut dyn FileSource) -> Result<Outcome> {
+    /// Apply every operation of a proposal in order; stop at the first failure.
+    /// Manual instructions are collected and returned, not executed.
+    pub fn apply_all(&self, ops: &[Operation], files: &mut dyn FileSource) -> Result<Outcome> {
         if self.dry_run {
             return Ok(Outcome::Skipped("dry run".into()));
         }
+        let mut manual = Vec::new();
+        for op in ops {
+            if let Outcome::Manual(text) = self.apply(op, files)? {
+                manual.push(text);
+            }
+        }
+        Ok(if manual.is_empty() {
+            Outcome::Done
+        } else {
+            Outcome::Manual(manual.join("\n"))
+        })
+    }
+
+    pub fn apply(&self, op: &Operation, files: &mut dyn FileSource) -> Result<Outcome> {
         match op {
             Operation::InstallPackages { packages } => {
-                let pacman: Vec<&str> =
-                    packages.iter().filter(|p| p.source == PackageSource::Pacman).map(|p| p.name.as_str()).collect();
-                let aur: Vec<&str> =
-                    packages.iter().filter(|p| p.source == PackageSource::Aur).map(|p| p.name.as_str()).collect();
+                let pacman: Vec<&str> = packages
+                    .iter()
+                    .filter(|p| p.source == PackageSource::Pacman)
+                    .map(|p| p.name.as_str())
+                    .collect();
+                let aur: Vec<&str> = packages
+                    .iter()
+                    .filter(|p| p.source == PackageSource::Aur)
+                    .map(|p| p.name.as_str())
+                    .collect();
                 if !pacman.is_empty() {
-                    run("sudo", &[&["pacman", "-S", "--needed", "--noconfirm"][..], &pacman].concat())?;
+                    run(
+                        "sudo",
+                        &[&["pacman", "-S", "--needed", "--noconfirm"][..], &pacman].concat(),
+                    )?;
                 }
                 if !aur.is_empty() {
-                    run("yay", &[&["-S", "--needed", "--noconfirm"][..], &aur].concat())?;
+                    run(
+                        "yay",
+                        &[&["-S", "--needed", "--noconfirm"][..], &aur].concat(),
+                    )?;
                 }
-                for p in packages.iter().filter(|p| p.source == PackageSource::DistroInstaller) {
+                for p in packages
+                    .iter()
+                    .filter(|p| p.source == PackageSource::DistroInstaller)
+                {
                     run(&format!("omarchy-install-{}", p.name), &[])?;
                 }
                 Ok(Outcome::Done)
@@ -70,7 +101,11 @@ impl Executor {
                 }
                 Ok(Outcome::Done)
             }
-            Operation::WriteConfig { path, content, mode } => {
+            Operation::WriteConfig {
+                path,
+                content,
+                mode,
+            } => {
                 if let Some(parent) = path.parent() {
                     std::fs::create_dir_all(parent)?;
                 }
@@ -107,8 +142,15 @@ impl Executor {
 
 fn run(bin: &str, args: &[&str]) -> Result<()> {
     tracing::info!(bin, ?args, "exec");
-    let status = Command::new(bin).args(args).status().with_context(|| format!("running {bin}"))?;
-    anyhow::ensure!(status.success(), "{bin} {} exited with {status}", args.join(" "));
+    let status = Command::new(bin)
+        .args(args)
+        .status()
+        .with_context(|| format!("running {bin}"))?;
+    anyhow::ensure!(
+        status.success(),
+        "{bin} {} exited with {status}",
+        args.join(" ")
+    );
     Ok(())
 }
 
@@ -140,4 +182,79 @@ fn walkdir(dir: &Path) -> Result<Vec<std::path::PathBuf>> {
         out.push(p);
     }
     Ok(out)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use omarchy_onboard_core::FileKind;
+
+    /// Copies from local disk; stands in for the paired client.
+    struct LocalFiles;
+    impl FileSource for LocalFiles {
+        fn fetch(&mut self, item: &FileRef, dest: &Path) -> Result<()> {
+            std::fs::copy(&item.path, dest)?;
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn write_config_append_is_idempotent() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("nested").join("rc");
+        let op = Operation::WriteConfig {
+            path: path.clone(),
+            content: "export A=1\n".into(),
+            mode: ConfigMode::Append,
+        };
+        let ex = Executor { dry_run: false };
+        ex.apply(&op, &mut LocalFiles).unwrap();
+        ex.apply(&op, &mut LocalFiles).unwrap();
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "export A=1\n");
+    }
+
+    #[test]
+    fn pull_files_applies_mode() {
+        let dir = tempfile::tempdir().unwrap();
+        let src = dir.path().join("key");
+        std::fs::write(&src, "secret").unwrap();
+        let dest = dir.path().join("out").join("key");
+        let op = Operation::PullFiles {
+            items: vec![FileRef {
+                path: src,
+                kind: FileKind::File,
+                size: 6,
+            }],
+            dest: dest.clone(),
+            mode: Some(0o600),
+        };
+        Executor { dry_run: false }
+            .apply(&op, &mut LocalFiles)
+            .unwrap();
+        assert_eq!(std::fs::read_to_string(&dest).unwrap(), "secret");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            assert_eq!(
+                std::fs::metadata(&dest).unwrap().permissions().mode() & 0o777,
+                0o600
+            );
+        }
+    }
+
+    #[test]
+    fn dry_run_touches_nothing_and_manual_is_collected() {
+        let ex = Executor { dry_run: true };
+        let ops = [Operation::Manual {
+            instructions: "do it".into(),
+        }];
+        assert!(matches!(
+            ex.apply_all(&ops, &mut LocalFiles).unwrap(),
+            Outcome::Skipped(_)
+        ));
+        let ex = Executor { dry_run: false };
+        assert!(
+            matches!(ex.apply_all(&ops, &mut LocalFiles).unwrap(), Outcome::Manual(m) if m == "do it")
+        );
+    }
 }

@@ -5,7 +5,11 @@ pub fn heading(s: &str) {
 }
 
 pub fn group(title: &str, count: &str) {
-    println!("\n{} {}", style(title).bold().cyan(), style(format!("({count})")).dim());
+    println!(
+        "\n{} {}",
+        style(title).bold().cyan(),
+        style(format!("({count})")).dim()
+    );
 }
 
 pub fn item(s: &str) {
@@ -24,5 +28,9 @@ pub fn human_bytes(n: u64) -> String {
         v /= 1024.0;
         i += 1;
     }
-    if i == 0 { format!("{n} B") } else { format!("{v:.1} {}", UNITS[i]) }
+    if i == 0 {
+        format!("{n} B")
+    } else {
+        format!("{v:.1} {}", UNITS[i])
+    }
 }

@@ -1,4 +1,4 @@
-//! Helpers shared by checks that reference files.
+//! Helpers shared by topics that reference files.
 
 use omarchy_onboard_core::{FileKind, FileRef};
 use std::path::Path;
@@ -14,8 +14,16 @@ pub fn file_ref(path: &Path) -> Option<FileRef> {
             .filter(|m| m.is_file())
             .map(|m| m.len())
             .sum();
-        Some(FileRef { path: path.to_path_buf(), kind: FileKind::Directory, size })
+        Some(FileRef {
+            path: path.to_path_buf(),
+            kind: FileKind::Directory,
+            size,
+        })
     } else {
-        Some(FileRef { path: path.to_path_buf(), kind: FileKind::File, size: meta.len() })
+        Some(FileRef {
+            path: path.to_path_buf(),
+            kind: FileKind::File,
+            size: meta.len(),
+        })
     }
 }

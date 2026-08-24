@@ -2,27 +2,42 @@
 
 Rust workspace. Toolchain and tasks via `mise` (`mise run build|test|lint|scan|plan`).
 
-## Phases → crates
+## Model
 
-| Phase | Runs on | Crate | Core trait |
+The unit of authorship is a **Topic** — one row of the spreadsheet: how to look for a
+concern on each source platform, and what to propose on the target.
+
+| Phase | Runs on | Topic method | Output |
 |---|---|---|---|
-| Discover | source (Mac) | `omarchy-onboard-checks` | `Check` → `Vec<Finding>` |
-| Propose | target (Omarchy) | `omarchy-onboard-rules` | `Rule` → `Vec<Proposal>` |
-| Migrate | target | `omarchy-onboard-target` | `Executor` over `Operation`, `PackageIndex` |
-| Transport | both | `omarchy-onboard-net` | pairing code, mDNS discovery, request/response, tar file streaming |
+| Discover | source (Mac) | `Topic::discover(SourceContext)` | `Vec<Finding>` — facts, never actions |
+| Propose | target (Omarchy) | `Topic::propose(mine, all, TargetContext)` | `Vec<Proposal>` — each composed of `Operation` primitives |
+| Migrate | target | `Executor::apply_all` (`omarchy-onboard-target`) | runs primitives: pacman/yay/`omarchy-*`/files |
 
-`omarchy-onboard-core` holds the model and is platform-free. Adding a check = new module in
-`crates/checks/src/<platform>/` + register in `all()`. Adding a rule = new module in
-`crates/rules/src/` + register in `all()`. Package/app mappings live in
-`crates/rules/src/maps/*.toml`, not in Rust.
+Crates: `core` (model, platform-free) · `topics` (all topics + mapping TOML) · `target`
+(executor, `PackageIndex`) · `net` (pairing, transport) · `cli`.
+
+## Adding a topic
+
+```
+crates/topics/src/<id>/mod.rs      TopicMeta + propose  (+ any value structs)
+crates/topics/src/<id>/macos.rs    discover on macOS      (unix.rs if shared with Linux)
+crates/topics/src/<id>/windows.rs  later
+```
+
+Register in `topics::all()`. Mapping tables live beside the topic (`homebrew/map.toml`).
+Add a propose test in `crates/topics/tests/propose.rs` (canned findings → expected proposals)
+and, if discover reads files, a discover test against a temp home in `tests/discover.rs`.
 
 ## Principles
 
-- Findings are facts, never actions. Proposals carry the *semantically equivalent*
-  operation (install the package, not copy its files). `PullFiles` is only for user-owned data.
-- Every proposal is traceable to its findings (`Proposal::findings`) and has a default
-  decision; users accept/skip per item or per `Group`.
-- Checks are gated by `CheckMeta::platforms`, not `cfg`, so the catalogue is visible everywhere.
+- Findings are facts, never actions, and never contain secrets — reference files with `FileRef`.
+- Propose the *semantically equivalent* thing: `InstallPackages`, `InstallEditorExtension`,
+  `WriteConfig`, `SetTheme`. `PullFiles` is only for user-owned data. `RunCommand` is the
+  escape hatch — treat it like `unsafe`. If a topic can't express itself, add a primitive.
+- A proposal may carry several operations; they run in order and stop on first failure.
+- Every proposal names its findings and has a default; users accept/skip per item or per `Group`.
+- Topics are gated by `TopicMeta::sources`, not `cfg`, so the catalogue is visible everywhere.
+- `propose` sees the whole `Discovery` for cross-topic cases (font referenced by terminal config).
 
 ## Pairing
 
@@ -31,11 +46,12 @@ scans for that tag, connects over iroh (QUIC, keypair-authenticated, relay disab
 proves the code with `SHA256(code ‖ TLS-EKM)` on the first stream. One bi-stream per
 request, length-prefixed JSON (`net/src/protocol.rs`); `GetFile` is followed by a tar stream.
 
-## Testing on one machine
+## Tests
 
-```sh
-omarchy-onboard serve --code TEST-2345 &
-omarchy-onboard migrate TEST-2345 --yes --dry-run
-```
+`cargo test --workspace` — unit + propose/discover/executor tests, no network.
+`cargo test -p omarchy-onboard-net -- --ignored` — real pairing over local sockets;
+occasionally times out on the first run after a cold start (mDNS), passes on rerun.
 
-Needs macOS Local Network permission for the process that spawned it (see `~/.claude/CLAUDE.md`).
+Manual, one machine: `omarchy-onboard serve --code TEST-2345 &` then
+`omarchy-onboard migrate TEST-2345 --yes --dry-run`. Needs macOS Local Network permission
+for the process that spawned it (see `~/.claude/CLAUDE.md`).

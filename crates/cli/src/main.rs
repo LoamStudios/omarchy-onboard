@@ -4,7 +4,7 @@
 //! Target machine:  `omarchy-onboard migrate <code>`  (discover → propose → migrate)
 //!
 //! Either machine, offline:
-//!   `omarchy-onboard checks`             list what Discover can look at
+//!   `omarchy-onboard topics`             list what Discover can look at
 //!   `omarchy-onboard scan`               run checks here, write discovery.json
 //!   `omarchy-onboard plan`               propose from a discovery, decide, write plan.json
 //!   `omarchy-onboard apply --dry-run`    show what Migrate would do
@@ -21,7 +21,11 @@ use clap::{CommandFactory, Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "omarchy-onboard", version, about = "Omarchy migration assistant")]
+#[command(
+    name = "omarchy-onboard",
+    version,
+    about = "Omarchy migration assistant"
+)]
 struct Cli {
     #[command(subcommand)]
     cmd: Cmd,
@@ -29,20 +33,20 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Cmd {
-    /// List available checks for this (or a given) platform.
-    Checks {
-        /// Show checks for all platforms, not just this one.
+    /// List topics: what Discover can look at, and on which platforms.
+    Topics {
+        /// Show topics for all platforms, not just this one.
         #[arg(long)]
         all: bool,
     },
-    /// Discover: run checks on this machine and write findings.
+    /// Discover: run topics on this machine and write findings.
     Scan {
         /// Where to write the discovery.
         #[arg(short, long, default_value = "discovery.json")]
         out: PathBuf,
-        /// Only run these check ids.
+        /// Only run these topic ids.
         #[arg(long)]
-        check: Vec<String>,
+        topic: Vec<String>,
     },
     /// Propose: turn a discovery into a plan, interactively deciding what to accept.
     Plan {
@@ -105,12 +109,27 @@ fn main() -> Result<()> {
         .init();
 
     match Cli::parse().cmd {
-        Cmd::Checks { all } => scan::list_checks(all),
-        Cmd::Scan { out, check } => scan::scan(&out, &check),
-        Cmd::Plan { discovery, local, out, yes, packages } => plan::plan(&discovery, local, &out, yes, packages.as_deref()),
-        Cmd::Apply { plan, dry_run, code } => apply::apply(&plan, dry_run, code.as_deref()),
+        Cmd::Topics { all } => scan::list_topics(all),
+        Cmd::Scan { out, topic } => scan::scan(&out, &topic),
+        Cmd::Plan {
+            discovery,
+            local,
+            out,
+            yes,
+            packages,
+        } => plan::plan(&discovery, local, &out, yes, packages.as_deref()),
+        Cmd::Apply {
+            plan,
+            dry_run,
+            code,
+        } => apply::apply(&plan, dry_run, code.as_deref()),
         Cmd::Serve { code } => serve::serve(code.as_deref()),
-        Cmd::Migrate { code, yes, dry_run, packages } => migrate::migrate(&code, yes, dry_run, packages.as_deref()),
+        Cmd::Migrate {
+            code,
+            yes,
+            dry_run,
+            packages,
+        } => migrate::migrate(&code, yes, dry_run, packages.as_deref()),
         Cmd::Usage => {
             let mut buf = Vec::new();
             clap_usage::generate(&mut Cli::command(), "omarchy-onboard", &mut buf);

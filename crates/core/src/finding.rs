@@ -6,11 +6,10 @@ use std::path::PathBuf;
 /// they describe what *is*, never what to do about it.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Finding {
-    /// Id of the check that produced this.
-    pub check: String,
+    pub topic: String,
     pub group: Group,
     /// Stable key unique within the check, e.g. `formula/ripgrep`.
-    /// Rules match on `check` + `key`.
+    /// Topics match on `key`.
     pub key: String,
     /// Short human description, e.g. "Homebrew formula ripgrep 14.1.0".
     pub title: String,
@@ -24,9 +23,14 @@ pub struct Finding {
 }
 
 impl Finding {
-    pub fn new(check: &str, group: Group, key: impl Into<String>, title: impl Into<String>) -> Self {
+    pub fn new(
+        topic: &str,
+        group: Group,
+        key: impl Into<String>,
+        title: impl Into<String>,
+    ) -> Self {
         Self {
-            check: check.to_string(),
+            topic: topic.to_string(),
             group,
             key: key.into(),
             title: title.into(),
@@ -45,9 +49,9 @@ impl Finding {
         self
     }
 
-    /// `check:key` — globally unique id for this finding.
+    /// `topic:key` — globally unique id for this finding.
     pub fn id(&self) -> String {
-        format!("{}:{}", self.check, self.key)
+        format!("{}:{}", self.topic, self.key)
     }
 }
 

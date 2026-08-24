@@ -1,6 +1,6 @@
-use crate::code::PairingCode;
-use crate::protocol::{CheckInfo, Request, Response, read_msg, write_msg};
 use crate::ALPN;
+use crate::code::PairingCode;
+use crate::protocol::{Request, Response, TopicInfo, read_msg, write_msg};
 use anyhow::{Context, Result};
 use iroh::endpoint::{Connection, presets};
 use iroh::{Endpoint, RelayMode};
@@ -27,18 +27,26 @@ impl Client {
     pub fn pair(code: &PairingCode, timeout: Duration) -> Result<Self> {
         let rt = Runtime::new()?;
         let (endpoint, conn, host, platform) = rt.block_on(pair_async(code, timeout))?;
-        Ok(Self { rt, endpoint, conn, host, platform })
+        Ok(Self {
+            rt,
+            endpoint,
+            conn,
+            host,
+            platform,
+        })
     }
 
-    pub fn list_checks(&self) -> Result<Vec<CheckInfo>> {
-        match self.call(Request::ListChecks)? {
-            Response::Checks(c) => Ok(c),
+    pub fn list_topics(&self) -> Result<Vec<TopicInfo>> {
+        match self.call(Request::ListTopics)? {
+            Response::Topics(c) => Ok(c),
             other => anyhow::bail!("unexpected response: {other:?}"),
         }
     }
 
     pub fn discover(&self, only: &[String]) -> Result<Discovery> {
-        match self.call(Request::RunChecks { only: only.to_vec() })? {
+        match self.call(Request::Discover {
+            only: only.to_vec(),
+        })? {
             Response::Discovery(d) => Ok(*d),
             other => anyhow::bail!("unexpected response: {other:?}"),
         }
@@ -81,7 +89,11 @@ impl FileSource for Client {
             let dest = dest.to_path_buf();
             let kind = item.kind;
             let unpack = tokio::task::spawn_blocking(move || -> Result<()> {
-                let reader = ChannelReader { rx, buf: Vec::new(), pos: 0 };
+                let reader = ChannelReader {
+                    rx,
+                    buf: Vec::new(),
+                    pos: 0,
+                };
                 let mut ar = tar::Archive::new(reader);
                 // The archive has one top-level entry named after the source's
                 // file name; unpack it *as* `dest`.
@@ -145,14 +157,19 @@ impl std::io::Read for ChannelReader {
     }
 }
 
-async fn pair_async(code: &PairingCode, timeout: Duration) -> Result<(Endpoint, Connection, String, Platform)> {
+async fn pair_async(
+    code: &PairingCode,
+    timeout: Duration,
+) -> Result<(Endpoint, Connection, String, Platform)> {
     let endpoint = Endpoint::builder(presets::Minimal)
         .relay_mode(RelayMode::Disabled)
         .alpns(vec![ALPN.to_vec()])
         .bind()
         .await
         .context("binding endpoint")?;
-    let mdns = MdnsAddressLookup::builder().advertise(false).build(endpoint.id())?;
+    let mdns = MdnsAddressLookup::builder()
+        .advertise(false)
+        .build(endpoint.id())?;
     endpoint.address_lookup()?.add(mdns.clone());
 
     match pair_on(&endpoint, &mdns, code, timeout).await {
@@ -175,7 +192,11 @@ async fn pair_on(
     let found = tokio::time::timeout(timeout, async {
         while let Some(ev) = events.next().await {
             if let DiscoveryEvent::Discovered { endpoint_info, .. } = ev
-                && endpoint_info.data.user_data().map(|u| u.as_ref() == tag.as_str()).unwrap_or(false)
+                && endpoint_info
+                    .data
+                    .user_data()
+                    .map(|u| u.as_ref() == tag.as_str())
+                    .unwrap_or(false)
             {
                 return Some(endpoint_info);
             }
@@ -183,11 +204,19 @@ async fn pair_on(
         None
     })
     .await
-    .map_err(|_| anyhow::anyhow!("no source with that pairing code found on the local network within {}s", timeout.as_secs()))?
+    .map_err(|_| {
+        anyhow::anyhow!(
+            "no source with that pairing code found on the local network within {}s",
+            timeout.as_secs()
+        )
+    })?
     .context("discovery ended")?;
 
     tracing::info!(id = %found.endpoint_id, "found source");
-    let conn = endpoint.connect(found.into_endpoint_addr(), ALPN).await.context("connecting to source")?;
+    let conn = endpoint
+        .connect(found.into_endpoint_addr(), ALPN)
+        .await
+        .context("connecting to source")?;
 
     let proof = code.proof(&conn)?;
     let (mut send, mut recv) = conn.open_bi().await?;

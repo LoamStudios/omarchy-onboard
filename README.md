@@ -26,8 +26,8 @@ only plan. Offline: `scan` → `plan` → `apply`.
 
 ## Status
 
-Early. Pairing, discovery, planning and file pulls work; only Homebrew and shell
-dotfiles are covered so far.
+Early. Pairing, discovery, planning and file pulls work. Topics so far: Homebrew,
+shell dotfiles, SSH keys and config.
 
 ## Layout
 
