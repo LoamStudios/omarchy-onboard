@@ -455,7 +455,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "omarchy-migrate"
+name = "omamigrate"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -463,9 +463,9 @@ dependencies = [
  "clap_usage",
  "console",
  "demand",
- "omarchy-migrate-checks",
- "omarchy-migrate-core",
- "omarchy-migrate-rules",
+ "omamigrate-checks",
+ "omamigrate-core",
+ "omamigrate-rules",
  "serde",
  "serde_json",
  "tracing",
@@ -473,11 +473,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "omarchy-migrate-checks"
+name = "omamigrate-checks"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "omarchy-migrate-core",
+ "omamigrate-core",
  "serde",
  "serde_json",
  "tracing",
@@ -485,7 +485,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "omarchy-migrate-core"
+name = "omamigrate-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -495,12 +495,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "omarchy-migrate-rules"
+name = "omamigrate-rules"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "omarchy-migrate-checks",
- "omarchy-migrate-core",
+ "omamigrate-checks",
+ "omamigrate-core",
  "serde",
  "serde_json",
  "toml",

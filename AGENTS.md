@@ -1,4 +1,4 @@
-# omarchy-migrate — Omarchy migration assistant
+# omamigrate — Omarchy migration assistant
 
 Rust workspace. Toolchain and tasks via `mise` (`mise run build|test|lint|scan|plan`).
 
@@ -6,11 +6,11 @@ Rust workspace. Toolchain and tasks via `mise` (`mise run build|test|lint|scan|p
 
 | Phase | Runs on | Crate | Core trait |
 |---|---|---|---|
-| Discover | source (Mac) | `omarchy-migrate-checks` | `Check` → `Vec<Finding>` |
-| Propose | target (Omarchy) | `omarchy-migrate-rules` | `Rule` → `Vec<Proposal>` |
-| Migrate | target | `omarchy-migrate` (cli) | executor over `Operation` |
+| Discover | source (Mac) | `omamigrate-checks` | `Check` → `Vec<Finding>` |
+| Propose | target (Omarchy) | `omamigrate-rules` | `Rule` → `Vec<Proposal>` |
+| Migrate | target | `omamigrate` (cli) | executor over `Operation` |
 
-`omarchy-migrate-core` holds the model and is platform-free. Adding a check = new module in
+`omamigrate-core` holds the model and is platform-free. Adding a check = new module in
 `crates/checks/src/<platform>/` + register in `all()`. Adding a rule = new module in
 `crates/rules/src/` + register in `all()`. Package/app mappings live in
 `crates/rules/src/maps/*.toml`, not in Rust.

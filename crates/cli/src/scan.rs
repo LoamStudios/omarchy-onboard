@@ -1,12 +1,12 @@
 use crate::ui;
 use anyhow::{Context, Result};
-use omarchy_migrate_core::{Discovery, Platform, SourceContext};
+use omamigrate_core::{Discovery, Platform, SourceContext};
 use std::collections::BTreeMap;
 use std::path::Path;
 
 pub fn list_checks(all: bool) -> Result<()> {
     let platform = Platform::current();
-    let checks = if all { omarchy_migrate_checks::all() } else { omarchy_migrate_checks::for_platform(platform) };
+    let checks = if all { omamigrate_checks::all() } else { omamigrate_checks::for_platform(platform) };
     ui::heading(&format!("Checks{}", if all { "" } else { " for this machine" }));
     let mut by_group: BTreeMap<_, Vec<_>> = BTreeMap::new();
     for c in &checks {
@@ -32,7 +32,7 @@ pub fn discover(only: &[String]) -> Result<Discovery> {
         checks_failed: BTreeMap::new(),
         findings: vec![],
     };
-    for check in omarchy_migrate_checks::for_platform(ctx.platform) {
+    for check in omamigrate_checks::for_platform(ctx.platform) {
         let id = check.meta().id;
         if !only.is_empty() && !only.iter().any(|o| o == id) {
             continue;

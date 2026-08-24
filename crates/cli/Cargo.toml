@@ -1,17 +1,17 @@
 [package]
-name = "omarchy-migrate"
+name = "omamigrate"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "omarchy-migrate"
+name = "omamigrate"
 path = "src/main.rs"
 
 [dependencies]
-omarchy-migrate-core.workspace = true
-omarchy-migrate-checks.workspace = true
-omarchy-migrate-rules.workspace = true
+omamigrate-core.workspace = true
+omamigrate-checks.workspace = true
+omamigrate-rules.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true

@@ -1,7 +1,7 @@
 //! Shell dotfiles → pull to the target, with a warning where zsh ≠ bash.
 
-use omarchy_migrate_checks::macos::shell;
-use omarchy_migrate_core::{Decision, Discovery, Group, Operation, Proposal, Rule, TargetContext};
+use omamigrate_checks::macos::shell;
+use omamigrate_core::{Decision, Discovery, Group, Operation, Proposal, Rule, TargetContext};
 
 pub struct ShellDotfiles;
 

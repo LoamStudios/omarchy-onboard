@@ -1,4 +1,4 @@
-# omarchy-migrate
+# omamigrate
 
 Move from a Mac to [Omarchy](https://omarchy.org). Discovers what's set up on the
 source machine, proposes the *semantically equivalent* thing on Omarchy (install
