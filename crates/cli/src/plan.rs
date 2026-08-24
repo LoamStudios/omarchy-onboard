@@ -106,9 +106,10 @@ pub fn describe(p: &Proposal) -> String {
             format!("install {}", names.join(", "))
         }
         Operation::InstallEditorExtension { editor, extension } => format!("{editor}: install extension {extension}"),
-        Operation::PullFiles { items, dest } => {
+        Operation::PullFiles { items, dest, mode } => {
             let size: u64 = items.iter().map(|i| i.size).sum();
-            format!("pull {} item(s), {} → {}", items.len(), ui::human_bytes(size), dest.display())
+            let m = mode.map(|m| format!(" mode {m:o}")).unwrap_or_default();
+            format!("pull {} item(s), {} → {}{m}", items.len(), ui::human_bytes(size), dest.display())
         }
         Operation::WriteConfig { path, mode, .. } => format!("write {} ({mode:?})", path.display()),
         Operation::SetTheme { name } => format!("set theme {name}"),

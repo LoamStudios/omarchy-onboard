@@ -18,7 +18,13 @@ pub enum Operation {
 
     /// Copy files/directories from the source. Only for genuinely user-owned
     /// data (documents, dotfiles) — not for anything installable.
-    PullFiles { items: Vec<FileRef>, dest: PathBuf },
+    PullFiles {
+        items: Vec<FileRef>,
+        dest: PathBuf,
+        /// Unix permission bits to apply to pulled files (e.g. `0o600` for secrets).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        mode: Option<u32>,
+    },
 
     /// Write or merge a config file on the target.
     WriteConfig { path: PathBuf, content: String, mode: ConfigMode },

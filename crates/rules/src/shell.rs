@@ -30,7 +30,7 @@ impl Rule for ShellDotfiles {
                     "Shell config is user-owned; copying it is the equivalent.".into()
                 },
                 findings: vec![f.id()],
-                operation: Operation::PullFiles { items: vec![file.clone()], dest: ctx.home.join(name) },
+                operation: Operation::PullFiles { items: vec![file.clone()], dest: ctx.home.join(name), mode: None },
                 default: if zsh { Decision::Skip } else { Decision::Accept },
             });
         }

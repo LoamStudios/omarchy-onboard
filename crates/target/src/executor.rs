@@ -53,7 +53,7 @@ impl Executor {
                 run(bin, &["--install-extension", extension])?;
                 Ok(Outcome::Done)
             }
-            Operation::PullFiles { items, dest } => {
+            Operation::PullFiles { items, dest, mode } => {
                 for item in items {
                     let target = if items.len() == 1 {
                         dest.clone()
@@ -64,6 +64,9 @@ impl Executor {
                         std::fs::create_dir_all(parent)?;
                     }
                     files.fetch(item, &target)?;
+                    if let Some(mode) = mode {
+                        set_mode(&target, *mode)?;
+                    }
                 }
                 Ok(Outcome::Done)
             }
@@ -107,4 +110,34 @@ fn run(bin: &str, args: &[&str]) -> Result<()> {
     let status = Command::new(bin).args(args).status().with_context(|| format!("running {bin}"))?;
     anyhow::ensure!(status.success(), "{bin} {} exited with {status}", args.join(" "));
     Ok(())
+}
+
+#[cfg(unix)]
+fn set_mode(path: &Path, mode: u32) -> Result<()> {
+    use std::os::unix::fs::PermissionsExt;
+    std::fs::set_permissions(path, std::fs::Permissions::from_mode(mode))?;
+    if path.is_dir() {
+        for e in walkdir(path)? {
+            std::fs::set_permissions(&e, std::fs::Permissions::from_mode(mode))?;
+        }
+    }
+    Ok(())
+}
+
+#[cfg(not(unix))]
+fn set_mode(_path: &Path, _mode: u32) -> Result<()> {
+    Ok(())
+}
+
+#[cfg(unix)]
+fn walkdir(dir: &Path) -> Result<Vec<std::path::PathBuf>> {
+    let mut out = Vec::new();
+    for e in std::fs::read_dir(dir)? {
+        let p = e?.path();
+        if p.is_dir() {
+            out.extend(walkdir(&p)?);
+        }
+        out.push(p);
+    }
+    Ok(out)
 }

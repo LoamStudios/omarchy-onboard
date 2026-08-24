@@ -10,9 +10,10 @@ use omarchy_onboard_core::{Discovery, Plan, Rule, TargetContext};
 pub mod maps;
 pub mod packages;
 pub mod shell;
+pub mod ssh;
 
 pub fn all() -> Vec<Box<dyn Rule>> {
-    vec![Box::new(packages::HomebrewToPacman), Box::new(shell::ShellDotfiles)]
+    vec![Box::new(packages::HomebrewToPacman), Box::new(shell::ShellDotfiles), Box::new(ssh::Ssh)]
 }
 
 /// Run every rule against a discovery and collect proposals into a plan.

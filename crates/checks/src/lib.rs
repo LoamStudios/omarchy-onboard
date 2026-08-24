@@ -13,6 +13,7 @@ pub fn all() -> Vec<Box<dyn Check>> {
     vec![
         Box::new(macos::homebrew::Homebrew),
         Box::new(macos::shell::ShellDotfiles),
+        Box::new(macos::ssh::Ssh),
     ]
 }
 
