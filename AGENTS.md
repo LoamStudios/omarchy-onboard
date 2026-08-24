@@ -9,7 +9,7 @@ concern on each source platform, and what to propose on the target.
 
 | Phase | Runs on | Topic method | Output |
 |---|---|---|---|
-| Discover | source (Mac) | `Topic::discover(SourceContext)` | `Vec<Finding>` — facts, never actions |
+| Discover | source (the old machine) | `Topic::discover(SourceContext)` | `Vec<Finding>` — facts, never actions |
 | Propose | target (Omarchy) | `Topic::propose(mine, all, TargetContext)` | `Vec<Proposal>` — each composed of `Operation` primitives |
 | Migrate | target | `Executor::apply_all` (`omarchy-onboard-target`) | runs primitives: pacman/yay/`omarchy-*`/files |
 
@@ -21,7 +21,8 @@ Crates: `core` (model, platform-free) · `topics` (all topics + mapping TOML) ·
 ```
 crates/topics/src/<id>/mod.rs      TopicMeta + propose  (+ any value structs)
 crates/topics/src/<id>/macos.rs    discover on macOS      (unix.rs if shared with Linux)
-crates/topics/src/<id>/windows.rs  later
+crates/topics/src/<id>/windows.rs  discover on Windows
+
 ```
 
 Register in `topics::all()`. Mapping tables live beside the topic (`homebrew/map.toml`).

@@ -18,7 +18,7 @@ pub enum Kind {
 pub enum NoteCategory {
     /// Omarchy already provides it.
     Covered,
-    /// A macOS-ism with no purpose on Linux.
+    /// Source-platform-specific; no purpose on Linux.
     NotNeeded,
     /// No direct equivalent, but here's what people use instead.
     Suggestion,

@@ -24,7 +24,7 @@ use std::path::PathBuf;
 #[command(
     name = "omarchy-onboard",
     version,
-    about = "Omarchy migration assistant"
+    about = "Move your computer to Omarchy"
 )]
 struct Cli {
     #[command(subcommand)]
