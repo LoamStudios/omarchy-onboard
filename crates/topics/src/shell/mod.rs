@@ -4,7 +4,7 @@ mod unix;
 
 use anyhow::Result;
 use omarchy_onboard_core::{
-    Decision, Discovery, Finding, Group, Operation, Platform, Proposal, SourceContext,
+    Decision, Discovery, Finding, Group, Kind, Operation, Platform, Proposal, SourceContext,
     TargetContext, Topic, TopicMeta,
 };
 use serde::{Deserialize, Serialize};
@@ -50,6 +50,7 @@ impl Topic for Shell {
             let zsh = name.starts_with(".zsh");
             out.push(Proposal {
                 id: format!("shell/{name}"),
+                kind: Kind::Action,
                 group: Group::Shell,
                 title: format!("Copy ~/{name}"),
                 rationale: if zsh {

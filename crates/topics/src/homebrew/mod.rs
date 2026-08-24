@@ -5,7 +5,7 @@ mod map;
 
 use anyhow::Result;
 use omarchy_onboard_core::{
-    Decision, Discovery, Finding, Group, Operation, Package, PackageSource, Platform, Proposal,
+    Discovery, Finding, Group, NoteCategory, Operation, Package, PackageSource, Platform, Proposal,
     SourceContext, TargetContext, Topic, TopicMeta,
 };
 use serde::{Deserialize, Serialize};
@@ -76,34 +76,25 @@ fn propose_one(f: &Finding, pkg: &BrewPackage, ctx: &TargetContext) -> Proposal 
         map::formula(&pkg.name)
     };
 
-    let manual = |title: String, text: String| Proposal {
-        id: id.clone(),
-        group,
-        title,
-        rationale: text.clone(),
-        findings: vec![f.id()],
-        operations: vec![Operation::Manual { instructions: text }],
-        default: Decision::Skip,
-    };
-    let install = |target: Package, rationale: String| Proposal {
-        id: id.clone(),
-        group,
-        title: format!("Install {}", describe(&target)),
-        rationale,
-        findings: vec![f.id()],
-        operations: vec![Operation::InstallPackages {
+    let install = |target: Package, rationale: String| {
+        Proposal::action(
+            &id,
+            group,
+            format!("Install {}", describe(&target)),
+            rationale,
+        )
+        .from(f.id())
+        .with(Operation::InstallPackages {
             packages: vec![target],
-        }],
-        default: Decision::Accept,
+        })
     };
 
     match mapped {
-        Some(eq) if eq.manual().is_some() => manual(
-            format!("{}: no direct equivalent", pkg.name),
-            eq.manual().unwrap().to_string(),
-        ),
         Some(eq) => {
-            let target = eq.package().expect("non-manual map entry has a package");
+            if let Some((category, text)) = eq.as_note() {
+                return Proposal::note(&id, category, group, &pkg.name, text).from(f.id());
+            }
+            let target = eq.package().expect("map row is installable or a note");
             let rationale = match eq.note() {
                 Some(n) => format!("{n}."),
                 None => format!("`{}` is the same tool, packaged for Arch.", target.name),
@@ -121,13 +112,17 @@ fn propose_one(f: &Finding, pkg: &BrewPackage, ctx: &TargetContext) -> Proposal 
                     pkg.name
                 ),
             ),
-            _ => manual(
-                format!("{}: unknown equivalent", pkg.name),
+            _ => Proposal::note(
+                &id,
+                NoteCategory::Unknown,
+                group,
+                &pkg.name,
                 format!(
                     "No mapping yet. Search for an equivalent: `yay -Ss {}`",
                     pkg.name
                 ),
-            ),
+            )
+            .from(f.id()),
         },
     }
 }

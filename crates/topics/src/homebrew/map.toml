@@ -1,12 +1,13 @@
-# Homebrew → Arch/Omarchy equivalents.
 #
 #   name = "pkg"                          same thing, in official repos
 #   name = { aur = "pkg" }                from the AUR
 #   name = { pacman = "pkg", note = "…" } with a note shown to the user
-#   name = { manual = "…" }               no equivalent; tell the user what to do
+#   name = { covered = "…" }              Omarchy already ships it        (note)
+#   name = { not_needed = "…" }           macOS-ism, pointless on Linux   (note)
+#   name = { suggestion = "…" }           no equivalent; what to use      (note)
 #
-# Names not listed here are proposed as `pacman <same-name>` with a lower
-# confidence rationale.
+# Names not listed here are installed if a package of the same name exists on
+# the target, otherwise reported as unknown.
 
 [formula]
 ripgrep = "ripgrep"
@@ -15,44 +16,44 @@ fzf = "fzf"
 bat = "bat"
 eza = "eza"
 jq = "jq"
-git = { pacman = "git", note = "Omarchy ships git by default" }
-neovim = { pacman = "neovim", note = "Omarchy ships neovim (LazyVim) by default" }
+git = { covered = "Omarchy ships git by default" }
+neovim = { covered = "Omarchy ships neovim (LazyVim) by default" }
 tmux = "tmux"
 zoxide = "zoxide"
 starship = "starship"
 gh = "github-cli"
-mise = { pacman = "mise", note = "Omarchy ships mise by default" }
-lazygit = { pacman = "lazygit", note = "Omarchy ships lazygit by default" }
+mise = { covered = "Omarchy ships mise by default" }
+lazygit = { covered = "Omarchy ships lazygit by default" }
 lazydocker = "lazydocker"
-docker = { manual = "Omarchy uses Docker via `omarchy-install-docker-dbs`; the daemon is already installed." }
-colima = { manual = "Not needed on Linux — Docker runs natively." }
-mas = { manual = "Mac App Store CLI; no equivalent." }
-coreutils = { manual = "GNU coreutils are the system default on Linux." }
-gnu-sed = { manual = "GNU sed is the system default on Linux." }
+docker = { suggestion = "Omarchy uses Docker via `omarchy-install-docker-dbs`; the daemon is already installed." }
+colima = { not_needed = "Not needed on Linux — Docker runs natively." }
+mas = { not_needed = "Mac App Store CLI; no equivalent." }
+coreutils = { suggestion = "GNU coreutils are the system default on Linux." }
+gnu-sed = { not_needed = "GNU sed is the system default on Linux." }
 python = "python"
-node = { manual = "Use `mise use node@lts` — Omarchy manages runtimes with mise." }
-go = { manual = "Use `mise use go@latest`." }
-rust = { manual = "Use `mise use rust@latest` or rustup." }
+node = { suggestion = "Use `mise use node@lts` — Omarchy manages runtimes with mise." }
+go = { suggestion = "Use `mise use go@latest`." }
+rust = { suggestion = "Use `mise use rust@latest` or rustup." }
 pnpm = "pnpm"
 yarn = "yarn"
 wget = "wget"
-curl = { manual = "Installed by default." }
+curl = { not_needed = "Installed by default." }
 htop = "htop"
-btop = { pacman = "btop", note = "Omarchy ships btop by default" }
+btop = { covered = "Omarchy ships btop by default" }
 ffmpeg = "ffmpeg"
 imagemagick = "imagemagick"
 pandoc = "pandoc"
 hugo = "hugo"
-postgresql = { manual = "Run `omarchy-install-docker-dbs` and choose PostgreSQL." }
-redis = { manual = "Run `omarchy-install-docker-dbs` and choose Redis." }
-mysql = { manual = "Run `omarchy-install-docker-dbs` and choose MySQL." }
+postgresql = { suggestion = "Run `omarchy-install-docker-dbs` and choose PostgreSQL." }
+redis = { suggestion = "Run `omarchy-install-docker-dbs` and choose Redis." }
+mysql = { suggestion = "Run `omarchy-install-docker-dbs` and choose MySQL." }
 sqlite = "sqlite"
 openssl = "openssl"
 gnupg = "gnupg"
 direnv = "direnv"
 shellcheck = "shellcheck"
 tree = "tree"
-watch = { manual = "Part of procps-ng, installed by default." }
+watch = { not_needed = "Part of procps-ng, installed by default." }
 
 [cask]
 visual-studio-code = { aur = "visual-studio-code-bin", note = "Microsoft build, so the extension marketplace works; `code` (Code - OSS) is the repo alternative" }
@@ -62,26 +63,26 @@ ghostty = "ghostty"
 alacritty = { pacman = "alacritty", note = "Omarchy's default terminal" }
 kitty = "kitty"
 wezterm = "wezterm"
-iterm2 = { manual = "macOS only. Omarchy ships Alacritty and Ghostty is available." }
+iterm2 = { not_needed = "macOS only. Omarchy ships Alacritty and Ghostty is available." }
 firefox = "firefox"
-google-chrome = { manual = "Omarchy ships Chromium; for Chrome proper use `aur = google-chrome`." }
+google-chrome = { suggestion = "Omarchy ships Chromium; for Chrome proper use `aur = google-chrome`." }
 brave-browser = { aur = "brave-bin" }
-arc = { manual = "macOS only. Nearest: Zen Browser (`aur = zen-browser-bin`)." }
+arc = { suggestion = "macOS only. Nearest: Zen Browser (`aur = zen-browser-bin`)." }
 slack = { aur = "slack-desktop" }
 discord = "discord"
 zoom = { aur = "zoom" }
-spotify = { pacman = "spotify-launcher", note = "Omarchy ships Spotify by default" }
-obsidian = { pacman = "obsidian", note = "Omarchy ships Obsidian by default" }
+spotify = { covered = "Omarchy ships Spotify by default" }
+obsidian = { covered = "Omarchy ships Obsidian by default" }
 notion = { aur = "notion-app-electron" }
-figma = { manual = "Use the web app; Omarchy adds it as a web app via `omarchy-webapp-install`." }
-1password = { pacman = "1password", note = "Omarchy ships 1Password by default" }
+figma = { suggestion = "Use the web app; Omarchy adds it as a web app via `omarchy-webapp-install`." }
+1password = { covered = "Omarchy ships 1Password by default" }
 "1password-cli" = "1password-cli"
-docker = { manual = "Docker Engine is installed by Omarchy; Docker Desktop has no Linux equivalent needed." }
-orbstack = { manual = "Not needed — Docker runs natively." }
-raycast = { manual = "Omarchy uses Walker as its launcher (Super+Space)." }
-alfred = { manual = "Omarchy uses Walker as its launcher (Super+Space)." }
-rectangle = { manual = "Hyprland tiles windows natively." }
-karabiner-elements = { manual = "Remap keys in ~/.config/hypr/input.conf (kb_options)." }
+docker = { not_needed = "Docker Engine is installed by Omarchy; Docker Desktop has no Linux equivalent needed." }
+orbstack = { not_needed = "Not needed — Docker runs natively." }
+raycast = { suggestion = "Omarchy uses Walker as its launcher (Super+Space)." }
+alfred = { suggestion = "Omarchy uses Walker as its launcher (Super+Space)." }
+rectangle = { not_needed = "Hyprland tiles windows natively." }
+karabiner-elements = { suggestion = "Remap keys in ~/.config/hypr/input.conf (kb_options)." }
 signal = "signal-desktop"
 telegram = "telegram-desktop"
 vlc = "vlc"
@@ -90,7 +91,7 @@ gimp = "gimp"
 inkscape = "inkscape"
 blender = "blender"
 postman = { aur = "postman-bin" }
-tableplus = { manual = "macOS/Windows only. Nearest: DBeaver (`dbeaver`)." }
+tableplus = { suggestion = "macOS/Windows only. Nearest: DBeaver (`dbeaver`)." }
 font-jetbrains-mono-nerd-font = { pacman = "ttf-jetbrains-mono-nerd", note = "Omarchy's default font" }
 font-fira-code = "ttf-fira-code"
 font-hack-nerd-font = "ttf-hack-nerd"

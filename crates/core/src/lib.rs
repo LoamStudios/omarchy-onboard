@@ -27,5 +27,5 @@ pub use finding::{FileKind, FileRef, Finding};
 pub use operation::{ConfigMode, Operation, Package, PackageSource};
 pub use plan::{Decision, Plan};
 pub use platform::{Group, Platform};
-pub use proposal::Proposal;
+pub use proposal::{Kind, NoteCategory, Proposal};
 pub use topic::{Topic, TopicMeta};

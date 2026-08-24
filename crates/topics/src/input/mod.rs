@@ -4,8 +4,8 @@ mod macos;
 
 use anyhow::Result;
 use omarchy_onboard_core::{
-    ConfigMode, Decision, Discovery, Finding, Group, Operation, Platform, Proposal, SourceContext,
-    TargetContext, Topic, TopicMeta,
+    ConfigMode, Decision, Discovery, Finding, Group, Kind, Operation, Platform, Proposal,
+    SourceContext, TargetContext, Topic, TopicMeta,
 };
 use serde::{Deserialize, Serialize};
 
@@ -65,6 +65,7 @@ impl Topic for Input {
         }
         vec![Proposal {
             id: "input/hyprland".into(),
+            kind: Kind::Action,
             group: Group::Input,
             title: "Match keyboard & pointer settings in Hyprland".into(),
             rationale: format!(

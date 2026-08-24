@@ -86,10 +86,10 @@ fn homebrew_maps_known_skips_dependencies_and_verifies_unknown_against_index() {
 
     let mas = by_id("packages/mas");
     assert_eq!(mas.default, Decision::Skip);
-    assert!(mas.is_manual_only());
+    assert!(!mas.is_action());
 
     let weird = by_id("packages/weirdtool");
-    assert!(weird.is_manual_only());
+    assert!(!weird.is_action());
 
     let slack = by_id("apps/slack");
     assert_eq!(slack.group, Group::Applications);

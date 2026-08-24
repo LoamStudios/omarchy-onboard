@@ -1,9 +1,9 @@
-use omarchy_onboard_core::{Package, PackageSource};
+use omarchy_onboard_core::{NoteCategory, Package, PackageSource};
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::sync::LazyLock;
 
-/// One row of a package map: how to get the equivalent on the target.
+/// One row of `map.toml`: how to get the equivalent on the target, or why not.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
 pub enum Equivalent {
@@ -16,12 +16,18 @@ pub enum Equivalent {
         aur: Option<String>,
         #[serde(default)]
         installer: Option<String>,
-        /// Human note, e.g. "Omarchy ships this by default".
+        /// Extra context shown with an install, e.g. "Microsoft build".
         #[serde(default)]
         note: Option<String>,
-        /// No Linux equivalent; instructions for the user.
+        /// Omarchy already ships it.
         #[serde(default)]
-        manual: Option<String>,
+        covered: Option<String>,
+        /// A macOS-ism with no purpose on Linux.
+        #[serde(default)]
+        not_needed: Option<String>,
+        /// No direct equivalent; what to use instead.
+        #[serde(default)]
+        suggestion: Option<String>,
     },
 }
 
@@ -59,9 +65,20 @@ impl Equivalent {
         }
     }
 
-    pub fn manual(&self) -> Option<&str> {
+    /// If this row is informational rather than installable.
+    pub fn as_note(&self) -> Option<(NoteCategory, &str)> {
         match self {
-            Equivalent::Full { manual, .. } => manual.as_deref(),
+            Equivalent::Full {
+                covered: Some(t), ..
+            } => Some((NoteCategory::Covered, t)),
+            Equivalent::Full {
+                not_needed: Some(t),
+                ..
+            } => Some((NoteCategory::NotNeeded, t)),
+            Equivalent::Full {
+                suggestion: Some(t),
+                ..
+            } => Some((NoteCategory::Suggestion, t)),
             _ => None,
         }
     }
@@ -75,13 +92,26 @@ struct MapFile {
     cask: BTreeMap<String, Equivalent>,
 }
 
-static HOMEBREW: LazyLock<MapFile> =
+static MAP: LazyLock<MapFile> =
     LazyLock::new(|| toml::from_str(include_str!("map.toml")).expect("homebrew/map.toml is valid"));
 
 pub fn formula(name: &str) -> Option<&'static Equivalent> {
-    HOMEBREW.formula.get(name)
+    MAP.formula.get(name)
 }
 
 pub fn cask(name: &str) -> Option<&'static Equivalent> {
-    HOMEBREW.cask.get(name)
+    MAP.cask.get(name)
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn map_parses_and_every_row_is_installable_or_a_note() {
+        for (name, eq) in super::MAP.formula.iter().chain(super::MAP.cask.iter()) {
+            assert!(
+                eq.package().is_some() || eq.as_note().is_some(),
+                "{name}: neither package nor note"
+            );
+        }
+    }
 }

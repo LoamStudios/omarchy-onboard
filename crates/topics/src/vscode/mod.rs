@@ -8,8 +8,8 @@ mod macos;
 
 use anyhow::Result;
 use omarchy_onboard_core::{
-    ConfigMode, Decision, Discovery, Finding, Group, Operation, Platform, Proposal, SourceContext,
-    TargetContext, Topic, TopicMeta,
+    ConfigMode, Decision, Discovery, Finding, Group, Kind, Operation, Platform, Proposal,
+    SourceContext, TargetContext, Topic, TopicMeta,
 };
 use serde::{Deserialize, Serialize};
 
@@ -65,6 +65,7 @@ impl Topic for VsCode {
                 };
                 out.push(Proposal {
                     id: "vscode/settings".into(),
+                    kind: Kind::Action,
                     group: Group::Editors,
                     title: "Copy VS Code settings.json".into(),
                     rationale: "User settings are portable; written to ~/.config/Code/User.".into(),
@@ -83,6 +84,7 @@ impl Topic for VsCode {
                 let (content, n) = rewrite_cmd(&c.content);
                 out.push(Proposal {
                     id: "vscode/keybindings".into(),
+                    kind: Kind::Action,
                     group: Group::Editors,
                     title: "Copy VS Code keybindings.json".into(),
                     rationale: if n > 0 {
@@ -101,6 +103,7 @@ impl Topic for VsCode {
             } else if f.key == "snippets" {
                 out.push(Proposal {
                     id: "vscode/snippets".into(),
+                    kind: Kind::Action,
                     group: Group::Editors,
                     title: "Copy VS Code snippets".into(),
                     rationale: "Your snippets directory, as-is.".into(),
@@ -118,6 +121,7 @@ impl Topic for VsCode {
             let (finding_ids, ids): (Vec<_>, Vec<_>) = extensions.into_iter().unzip();
             out.push(Proposal {
                 id: "vscode/extensions".into(),
+                kind: Kind::Action,
                 group: Group::Editors,
                 title: format!("Install {} VS Code extensions", ids.len()),
                 rationale: format!(

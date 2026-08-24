@@ -1,5 +1,5 @@
 use crate::platform::Group;
-use crate::proposal::Proposal;
+use crate::proposal::{Kind, NoteCategory, Proposal};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -54,16 +54,36 @@ impl Plan {
         }
     }
 
+    pub fn actions(&self) -> impl Iterator<Item = &Proposal> {
+        self.proposals.iter().filter(|p| p.is_action())
+    }
+
+    pub fn notes(&self) -> impl Iterator<Item = &Proposal> {
+        self.proposals.iter().filter(|p| !p.is_action())
+    }
+
+    /// Accepted actions. Notes are never "accepted".
     pub fn accepted(&self) -> impl Iterator<Item = &Proposal> {
-        self.proposals
-            .iter()
+        self.actions()
             .filter(|p| self.decision(p) == Decision::Accept)
     }
 
+    /// Actions by group (the checklist).
     pub fn by_group(&self) -> BTreeMap<Group, Vec<&Proposal>> {
         let mut map: BTreeMap<Group, Vec<&Proposal>> = BTreeMap::new();
-        for p in &self.proposals {
+        for p in self.actions() {
             map.entry(p.group).or_default().push(p);
+        }
+        map
+    }
+
+    /// Notes by category.
+    pub fn notes_by_category(&self) -> BTreeMap<NoteCategory, Vec<&Proposal>> {
+        let mut map: BTreeMap<NoteCategory, Vec<&Proposal>> = BTreeMap::new();
+        for p in self.notes() {
+            if let Kind::Note { category } = p.kind {
+                map.entry(category).or_default().push(p);
+            }
         }
         map
     }
@@ -75,17 +95,11 @@ mod tests {
     use crate::operation::Operation;
 
     fn p(id: &str, group: Group, default: Decision) -> Proposal {
-        Proposal {
-            id: id.into(),
-            group,
-            title: id.into(),
-            rationale: String::new(),
-            findings: vec![],
-            operations: vec![Operation::Manual {
-                instructions: String::new(),
-            }],
-            default,
-        }
+        let mut p = Proposal::action(id, group, id, "").with(Operation::Manual {
+            instructions: String::new(),
+        });
+        p.default = default;
+        p
     }
 
     #[test]
@@ -116,5 +130,35 @@ mod tests {
         plan.decide("a", Decision::Skip);
         let back: Plan = serde_json::from_str(&serde_json::to_string(&plan).unwrap()).unwrap();
         assert_eq!(back.decision(&back.proposals[0]), Decision::Skip);
+    }
+}
+
+#[cfg(test)]
+mod note_tests {
+    use super::*;
+    use crate::proposal::NoteCategory;
+
+    #[test]
+    fn notes_are_never_accepted_and_group_by_category() {
+        let mut plan = Plan::new(vec![
+            Proposal::action("a", Group::Packages, "a", ""),
+            Proposal::note(
+                "n1",
+                NoteCategory::Covered,
+                Group::Packages,
+                "git",
+                "ships with Omarchy",
+            ),
+            Proposal::note("n2", NoteCategory::Unknown, Group::Packages, "foo", "?"),
+        ]);
+        plan.accept_all();
+        assert_eq!(
+            plan.accepted().map(|p| p.id.as_str()).collect::<Vec<_>>(),
+            ["a"]
+        );
+        assert_eq!(plan.by_group()[&Group::Packages].len(), 1);
+        let notes = plan.notes_by_category();
+        assert_eq!(notes[&NoteCategory::Covered][0].id, "n1");
+        assert_eq!(notes[&NoteCategory::Unknown][0].id, "n2");
     }
 }

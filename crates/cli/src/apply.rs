@@ -15,15 +15,17 @@ pub fn apply(path: &Path, dry_run: bool, code: Option<&str>) -> Result<()> {
     match (needs_source && !dry_run, code) {
         (true, Some(code)) => {
             let mut client = migrate::connect(code)?;
-            run(&plan, dry_run, &mut client)?;
+            let r = run(&plan, dry_run, &mut client);
             client.close();
-            Ok(())
+            r
         }
         (true, None) => {
             anyhow::bail!("plan pulls files from the source; pass --code <pairing code>")
         }
         _ => run(&plan, dry_run, &mut NoSource),
-    }
+    }?;
+    crate::plan::print_notes(&plan);
+    Ok(())
 }
 
 pub fn run(plan: &Plan, dry_run: bool, files: &mut dyn FileSource) -> Result<()> {

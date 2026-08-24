@@ -31,9 +31,8 @@ pub fn migrate(code: &str, yes: bool, dry_run: bool, packages: Option<&Path>) ->
         return Ok(());
     }
     if yes {
-        for pr in &p.proposals {
-            p.decisions.insert(pr.id.clone(), pr.default);
-        }
+        let defaults: Vec<_> = p.actions().map(|pr| (pr.id.clone(), pr.default)).collect();
+        p.decisions.extend(defaults);
     } else {
         plan::decide_interactively(&mut p)?;
     }
@@ -42,6 +41,7 @@ pub fn migrate(code: &str, yes: bool, dry_run: bool, packages: Option<&Path>) ->
 
     ui::heading("Migrate");
     apply::run(&p, dry_run, &mut client)?;
+    plan::print_notes(&p);
     client.close();
     Ok(())
 }

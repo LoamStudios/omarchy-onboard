@@ -34,7 +34,9 @@ and, if discover reads files, a discover test against a temp home in `tests/disc
 - Propose the *semantically equivalent* thing: `InstallPackages`, `InstallEditorExtension`,
   `WriteConfig`, `SetTheme`. `PullFiles` is only for user-owned data. `RunCommand` is the
   escape hatch — treat it like `unsafe`. If a topic can't express itself, add a primitive.
-- A proposal may carry several operations; they run in order and stop on first failure.
+- A proposal is an **action** (checklist; runs operations, in order, stop on first failure) or a
+  **note** (`covered` / `not_needed` / `suggestion` / `unknown`) — shown after the plan, never a
+  decision. Notes are where we make suggestions when nothing programmatic can be done.
 - Every proposal names its findings and has a default; users accept/skip per item or per `Group`.
 - Topics are gated by `TopicMeta::sources`, not `cfg`, so the catalogue is visible everywhere.
 - `propose` sees the whole `Discovery` for cross-topic cases (font referenced by terminal config).

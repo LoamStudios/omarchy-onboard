@@ -7,8 +7,8 @@ mod unix;
 
 use anyhow::Result;
 use omarchy_onboard_core::{
-    ConfigMode, Decision, Discovery, Finding, Group, Operation, Platform, Proposal, SourceContext,
-    TargetContext, Topic, TopicMeta,
+    ConfigMode, Decision, Discovery, Finding, Group, Kind, Operation, Platform, Proposal,
+    SourceContext, TargetContext, Topic, TopicMeta,
 };
 use serde::{Deserialize, Serialize};
 
@@ -61,6 +61,7 @@ impl Topic for Ssh {
             if let Some(name) = f.key.strip_prefix("key/") {
                 out.push(Proposal {
                     id: format!("ssh/key/{name}"),
+                    kind: Kind::Action,
                     group: Group::Keys,
                     title: format!("Copy SSH key {name}"),
                     rationale: "Keys are yours; copied with 0600 so ssh will accept them.".into(),
@@ -80,6 +81,7 @@ impl Topic for Ssh {
             } else if f.key == "known_hosts" {
                 out.push(Proposal {
                     id: "ssh/known_hosts".into(),
+                    kind: Kind::Action,
                     group: Group::Keys,
                     title: "Copy ~/.ssh/known_hosts".into(),
                     rationale: "Keeps host fingerprints you've already trusted.".into(),
@@ -106,6 +108,7 @@ impl Topic for Ssh {
                 };
                 out.push(Proposal {
                     id: "ssh/config".into(),
+                    kind: Kind::Action,
                     group: Group::Keys,
                     title: format!("Write ~/.ssh/config ({} hosts)", cfg.hosts.len()),
                     rationale,

@@ -35,19 +35,20 @@ pub fn plan(
     }
 
     if yes {
-        for p in &plan.proposals {
-            plan.decisions.insert(p.id.clone(), p.default);
-        }
+        let defaults: Vec<_> = plan.actions().map(|p| (p.id.clone(), p.default)).collect();
+        plan.decisions.extend(defaults);
     } else {
         decide_interactively(&mut plan)?;
     }
 
     print_plan(&plan);
+    print_notes(&plan);
     std::fs::write(out, serde_json::to_string_pretty(&plan)?)?;
-    let accepted = plan.accepted().count();
     println!(
-        "\nWrote plan with {accepted}/{} accepted to {}",
-        plan.proposals.len(),
+        "\nWrote plan with {}/{} actions accepted and {} notes to {}",
+        plan.accepted().count(),
+        plan.actions().count(),
+        plan.notes().count(),
         out.display()
     );
     Ok(())
@@ -91,7 +92,7 @@ pub fn decide_interactively(plan: &mut Plan) -> Result<()> {
         }
         chosen.extend(ms.run()?);
     }
-    let all_ids: Vec<String> = plan.proposals.iter().map(|p| p.id.clone()).collect();
+    let all_ids: Vec<String> = plan.actions().map(|p| p.id.clone()).collect();
     for id in all_ids {
         let d = if chosen.contains(&id) {
             Decision::Accept
@@ -118,6 +119,24 @@ pub fn print_plan(plan: &Plan) {
             };
             ui::item(&format!("{mark} {}", p.title));
             ui::note(&describe(p));
+        }
+    }
+}
+
+pub fn print_notes(plan: &Plan) {
+    let notes = plan.notes_by_category();
+    if notes.is_empty() {
+        return;
+    }
+    ui::heading("Notes");
+    for (category, items) in notes {
+        ui::group(category.title(), &items.len().to_string());
+        for p in items {
+            ui::item(&format!(
+                "{}  {}",
+                style(&p.title).bold(),
+                style(&p.rationale).dim()
+            ));
         }
     }
 }
