@@ -1,0 +1,96 @@
+# Homebrew → Arch/Omarchy equivalents.
+#
+#   name = "pkg"                          same thing, in official repos
+#   name = { aur = "pkg" }                from the AUR
+#   name = { pacman = "pkg", note = "…" } with a note shown to the user
+#   name = { manual = "…" }               no equivalent; tell the user what to do
+#
+# Names not listed here are proposed as `pacman <same-name>` with a lower
+# confidence rationale.
+
+[formula]
+ripgrep = "ripgrep"
+fd = "fd"
+fzf = "fzf"
+bat = "bat"
+eza = "eza"
+jq = "jq"
+git = { pacman = "git", note = "Omarchy ships git by default" }
+neovim = { pacman = "neovim", note = "Omarchy ships neovim (LazyVim) by default" }
+tmux = "tmux"
+zoxide = "zoxide"
+starship = "starship"
+gh = "github-cli"
+mise = { pacman = "mise", note = "Omarchy ships mise by default" }
+lazygit = { pacman = "lazygit", note = "Omarchy ships lazygit by default" }
+lazydocker = "lazydocker"
+docker = { manual = "Omarchy uses Docker via `omarchy-install-docker-dbs`; the daemon is already installed." }
+colima = { manual = "Not needed on Linux — Docker runs natively." }
+mas = { manual = "Mac App Store CLI; no equivalent." }
+coreutils = { manual = "GNU coreutils are the system default on Linux." }
+gnu-sed = { manual = "GNU sed is the system default on Linux." }
+python = "python"
+node = { manual = "Use `mise use node@lts` — Omarchy manages runtimes with mise." }
+go = { manual = "Use `mise use go@latest`." }
+rust = { manual = "Use `mise use rust@latest` or rustup." }
+pnpm = "pnpm"
+yarn = "yarn"
+wget = "wget"
+curl = { manual = "Installed by default." }
+htop = "htop"
+btop = { pacman = "btop", note = "Omarchy ships btop by default" }
+ffmpeg = "ffmpeg"
+imagemagick = "imagemagick"
+pandoc = "pandoc"
+hugo = "hugo"
+postgresql = { manual = "Run `omarchy-install-docker-dbs` and choose PostgreSQL." }
+redis = { manual = "Run `omarchy-install-docker-dbs` and choose Redis." }
+mysql = { manual = "Run `omarchy-install-docker-dbs` and choose MySQL." }
+sqlite = "sqlite"
+openssl = "openssl"
+gnupg = "gnupg"
+direnv = "direnv"
+shellcheck = "shellcheck"
+tree = "tree"
+watch = { manual = "Part of procps-ng, installed by default." }
+
+[cask]
+visual-studio-code = { pacman = "code", note = "Open-source build (Code - OSS); or `aur = visual-studio-code-bin` for Microsoft's" }
+cursor = { aur = "cursor-bin" }
+zed = "zed"
+ghostty = "ghostty"
+alacritty = { pacman = "alacritty", note = "Omarchy's default terminal" }
+kitty = "kitty"
+wezterm = "wezterm"
+iterm2 = { manual = "macOS only. Omarchy ships Alacritty and Ghostty is available." }
+firefox = "firefox"
+google-chrome = { manual = "Omarchy ships Chromium; for Chrome proper use `aur = google-chrome`." }
+brave-browser = { aur = "brave-bin" }
+arc = { manual = "macOS only. Nearest: Zen Browser (`aur = zen-browser-bin`)." }
+slack = { aur = "slack-desktop" }
+discord = "discord"
+zoom = { aur = "zoom" }
+spotify = { pacman = "spotify-launcher", note = "Omarchy ships Spotify by default" }
+obsidian = { pacman = "obsidian", note = "Omarchy ships Obsidian by default" }
+notion = { aur = "notion-app-electron" }
+figma = { manual = "Use the web app; Omarchy adds it as a web app via `omarchy-webapp-install`." }
+1password = { pacman = "1password", note = "Omarchy ships 1Password by default" }
+"1password-cli" = "1password-cli"
+docker = { manual = "Docker Engine is installed by Omarchy; Docker Desktop has no Linux equivalent needed." }
+orbstack = { manual = "Not needed — Docker runs natively." }
+raycast = { manual = "Omarchy uses Walker as its launcher (Super+Space)." }
+alfred = { manual = "Omarchy uses Walker as its launcher (Super+Space)." }
+rectangle = { manual = "Hyprland tiles windows natively." }
+karabiner-elements = { manual = "Remap keys in ~/.config/hypr/input.conf (kb_options)." }
+signal = "signal-desktop"
+telegram = "telegram-desktop"
+vlc = "vlc"
+obs = "obs-studio"
+gimp = "gimp"
+inkscape = "inkscape"
+blender = "blender"
+postman = { aur = "postman-bin" }
+tableplus = { manual = "macOS/Windows only. Nearest: DBeaver (`dbeaver`)." }
+font-jetbrains-mono-nerd-font = { pacman = "ttf-jetbrains-mono-nerd", note = "Omarchy's default font" }
+font-fira-code = "ttf-fira-code"
+font-hack-nerd-font = "ttf-hack-nerd"

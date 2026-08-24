@@ -1,0 +1,21 @@
+[tools]
+rust = "1.95"
+usage = "latest"
+hk = "latest"
+
+[tasks.build]
+run = "cargo build --workspace"
+
+[tasks.test]
+run = "cargo test --workspace"
+
+[tasks.lint]
+run = ["cargo fmt --all --check", "cargo clippy --workspace --all-targets -- -D warnings"]
+
+[tasks.scan]
+description = "Run all checks against this machine and print findings"
+run = "cargo run -q -p omam -- scan"
+
+[tasks.plan]
+description = "Run checks locally and print what would be proposed"
+run = "cargo run -q -p omam -- plan --local"
