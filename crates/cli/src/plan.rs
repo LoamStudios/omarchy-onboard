@@ -2,10 +2,12 @@ use crate::{scan, ui};
 use anyhow::{Context, Result};
 use console::style;
 use demand::{DemandOption, MultiSelect};
-use omarchy_onboard_core::{Decision, Discovery, Operation, Plan, Platform, Proposal, TargetContext};
+use omarchy_onboard_core::{Decision, Discovery, NoIndex, Operation, PackageIndex, Plan, Platform, Proposal, TargetContext};
+use omarchy_onboard_target::{ListIndex, PacmanIndex};
 use std::path::Path;
+use std::sync::Arc;
 
-pub fn plan(discovery: &Path, local: bool, out: &Path, yes: bool) -> Result<()> {
+pub fn plan(discovery: &Path, local: bool, out: &Path, yes: bool, packages: Option<&Path>) -> Result<()> {
     let discovery: Discovery = if local {
         scan::discover(&[])?
     } else {
@@ -14,12 +16,7 @@ pub fn plan(discovery: &Path, local: bool, out: &Path, yes: bool) -> Result<()> 
         serde_json::from_str(&s)?
     };
 
-    let ctx = TargetContext {
-        platform: Platform::current(),
-        home: std::env::var_os("HOME").map(Into::into).unwrap_or_default(),
-    };
-    let mut plan = omarchy_onboard_rules::propose(&discovery, &ctx);
-
+    let mut plan = propose(&discovery, packages)?;
     if plan.proposals.is_empty() {
         println!("Nothing to propose.");
         return Ok(());
@@ -40,8 +37,28 @@ pub fn plan(discovery: &Path, local: bool, out: &Path, yes: bool) -> Result<()> 
     Ok(())
 }
 
+/// Build the target context (live pacman index on Arch, a list file, or nothing) and run rules.
+pub fn propose(discovery: &Discovery, packages: Option<&Path>) -> Result<Plan> {
+    let index: Arc<dyn PackageIndex> = match packages {
+        Some(p) => Arc::new(ListIndex::from_file(p).with_context(|| format!("reading {}", p.display()))?),
+        None => match PacmanIndex::load() {
+            Ok(i) => Arc::new(i),
+            Err(e) => {
+                tracing::warn!("no pacman index ({e:#}); unmapped packages will be proposed as manual");
+                Arc::new(NoIndex)
+            }
+        },
+    };
+    let ctx = TargetContext {
+        platform: Platform::current(),
+        home: std::env::var_os("HOME").map(Into::into).unwrap_or_default(),
+        packages: index,
+    };
+    Ok(omarchy_onboard_rules::propose(discovery, &ctx))
+}
+
 /// One multi-select per group; the proposal's default sets the initial checkbox.
-fn decide_interactively(plan: &mut Plan) -> Result<()> {
+pub fn decide_interactively(plan: &mut Plan) -> Result<()> {
     let groups = plan.by_group();
     let mut chosen: Vec<String> = Vec::new();
     for (group, proposals) in &groups {
@@ -70,7 +87,7 @@ pub fn print_plan(plan: &Plan) {
     ui::heading("Plan");
     for (group, proposals) in plan.by_group() {
         let accepted = proposals.iter().filter(|p| plan.decision(p) == Decision::Accept).count();
-        ui::group(group.title(), accepted);
+        ui::group(group.title(), &format!("{accepted}/{}", proposals.len()));
         for p in proposals {
             let mark = match plan.decision(p) {
                 Decision::Accept => style("✓").green(),

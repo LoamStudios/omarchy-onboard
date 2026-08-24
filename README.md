@@ -6,16 +6,28 @@ the package, not copy its files), and applies what you accept.
 
 Runs on the Omarchy machine and pulls from the Mac; the Mac only reports.
 
-## Status
+## Usage
 
-Early. Offline flow works on a single machine:
+On the Mac:
 
 ```sh
-mise install
-mise run plan      # scan this machine → interactive proposals → plan.json
+omarchy-onboard serve
 ```
 
-Pairing over the network (`serve` / `migrate`) is not wired yet.
+On the Omarchy machine, with the code it prints:
+
+```sh
+omarchy-onboard migrate K7QT-3MZP
+```
+
+It discovers what is on the Mac, shows proposals grouped by area (packages, apps,
+shell, …) with sensible defaults, and applies what you accept. Add `--dry-run` to
+only plan. Offline: `scan` → `plan` → `apply`.
+
+## Status
+
+Early. Pairing, discovery, planning and file pulls work; only Homebrew and shell
+dotfiles are covered so far.
 
 ## Layout
 

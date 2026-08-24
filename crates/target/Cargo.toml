@@ -1,0 +1,10 @@
+[package]
+name = "omarchy-onboard-target"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+omarchy-onboard-core.workspace = true
+anyhow.workspace = true
+tracing.workspace = true

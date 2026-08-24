@@ -15,7 +15,7 @@ impl Rule for HomebrewToPacman {
         &[homebrew::ID]
     }
 
-    fn propose(&self, discovery: &Discovery, _ctx: &TargetContext) -> Vec<Proposal> {
+    fn propose(&self, discovery: &Discovery, ctx: &TargetContext) -> Vec<Proposal> {
         let mut out = Vec::new();
         for f in discovery.for_check(homebrew::ID) {
             let Ok(pkg) = serde_json::from_value::<BrewPackage>(f.value.clone()) else { continue };
@@ -64,18 +64,31 @@ impl Rule for HomebrewToPacman {
                     },
                     default: Decision::Skip,
                 },
-                None => {
-                    let target = Package { name: pkg.name.clone(), source: PackageSource::Pacman };
-                    Proposal {
+                None => match ctx.packages.lookup(&pkg.name) {
+                    Some(source) => {
+                        let target = Package { name: pkg.name.clone(), source };
+                        Proposal {
+                            id,
+                            group,
+                            title: format!("Install {}", describe(&target)),
+                            rationale: format!("Not in the mapping table, but `{}` exists on the target with the same name.", pkg.name),
+                            findings: vec![f.id()],
+                            operation: Operation::InstallPackages { packages: vec![target] },
+                            default: Decision::Accept,
+                        }
+                    }
+                    None => Proposal {
                         id,
                         group,
-                        title: format!("Install {}", describe(&target)),
-                        rationale: "Not in the mapping table; assuming the Arch package has the same name.".into(),
+                        title: format!("{}: unknown equivalent", pkg.name),
+                        rationale: "Not in the mapping table and no package of that name on the target.".into(),
                         findings: vec![f.id()],
-                        operation: Operation::InstallPackages { packages: vec![target] },
-                        default: Decision::Accept,
-                    }
-                }
+                        operation: Operation::Manual {
+                            instructions: format!("Search for an equivalent: `yay -Ss {}`", pkg.name),
+                        },
+                        default: Decision::Skip,
+                    },
+                },
             };
             out.push(proposal);
         }

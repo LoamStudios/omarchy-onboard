@@ -10,8 +10,10 @@
 //!   `omarchy-onboard apply --dry-run`    show what Migrate would do
 
 mod apply;
+mod migrate;
 mod plan;
 mod scan;
+mod serve;
 mod ui;
 
 use anyhow::Result;
@@ -56,21 +58,40 @@ enum Cmd {
         /// Accept every proposal's default without prompting.
         #[arg(short, long)]
         yes: bool,
+        /// Package list to use instead of the live pacman index (e.g. `pacman -Slq > pkgs.txt`).
+        #[arg(long)]
+        packages: Option<PathBuf>,
     },
-    /// Migrate: apply the accepted operations in a plan.
+    /// Migrate: apply the accepted operations in a plan (needs a paired source for file pulls).
     Apply {
         #[arg(default_value = "plan.json")]
         plan: PathBuf,
         /// Print what would happen without doing it.
         #[arg(long)]
         dry_run: bool,
+        /// Pairing code of the source, needed if the plan pulls files.
+        #[arg(long)]
+        code: Option<String>,
     },
     /// Run on the source machine: wait for a target to pair and pull from us.
-    Serve,
+    Serve {
+        /// Use a fixed pairing code instead of generating one.
+        #[arg(long)]
+        code: Option<String>,
+    },
     /// Run on the target machine: pair with a source and migrate from it.
     Migrate {
         /// Pairing code shown by `omarchy-onboard serve`.
         code: String,
+        /// Accept every proposal's default without prompting.
+        #[arg(short, long)]
+        yes: bool,
+        /// Plan only; don't apply.
+        #[arg(long)]
+        dry_run: bool,
+        /// Package list to use instead of the live pacman index.
+        #[arg(long)]
+        packages: Option<PathBuf>,
     },
     /// Print the usage spec (for completions and docs).
     #[command(hide = true)]
@@ -86,10 +107,10 @@ fn main() -> Result<()> {
     match Cli::parse().cmd {
         Cmd::Checks { all } => scan::list_checks(all),
         Cmd::Scan { out, check } => scan::scan(&out, &check),
-        Cmd::Plan { discovery, local, out, yes } => plan::plan(&discovery, local, &out, yes),
-        Cmd::Apply { plan, dry_run } => apply::apply(&plan, dry_run),
-        Cmd::Serve => anyhow::bail!("pairing transport not implemented yet — use `omarchy-onboard scan` and copy discovery.json"),
-        Cmd::Migrate { .. } => anyhow::bail!("pairing transport not implemented yet — use `omarchy-onboard plan --discovery <file>`"),
+        Cmd::Plan { discovery, local, out, yes, packages } => plan::plan(&discovery, local, &out, yes, packages.as_deref()),
+        Cmd::Apply { plan, dry_run, code } => apply::apply(&plan, dry_run, code.as_deref()),
+        Cmd::Serve { code } => serve::serve(code.as_deref()),
+        Cmd::Migrate { code, yes, dry_run, packages } => migrate::migrate(&code, yes, dry_run, packages.as_deref()),
         Cmd::Usage => {
             let mut buf = Vec::new();
             clap_usage::generate(&mut Cli::command(), "omarchy-onboard", &mut buf);

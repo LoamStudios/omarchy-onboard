@@ -4,7 +4,7 @@ pub fn heading(s: &str) {
     println!("\n{}", style(s).bold().underlined());
 }
 
-pub fn group(title: &str, count: usize) {
+pub fn group(title: &str, count: &str) {
     println!("\n{} {}", style(title).bold().cyan(), style(format!("({count})")).dim());
 }
 

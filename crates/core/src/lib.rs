@@ -25,4 +25,4 @@ pub use operation::{ConfigMode, Operation, Package, PackageSource};
 pub use plan::{Decision, Plan};
 pub use platform::{Group, Platform};
 pub use proposal::Proposal;
-pub use rule::{Rule, TargetContext};
+pub use rule::{NoIndex, PackageIndex, Rule, TargetContext};

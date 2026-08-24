@@ -13,7 +13,7 @@ pub fn list_checks(all: bool) -> Result<()> {
         by_group.entry(c.meta().group).or_default().push(c.meta());
     }
     for (group, metas) in by_group {
-        ui::group(group.title(), metas.len());
+        ui::group(group.title(), &metas.len().to_string());
         for m in metas {
             ui::item(&format!("{}  {}", console::style(m.id).green(), m.title));
             ui::note(m.description);
@@ -61,7 +61,7 @@ pub fn scan(out: &Path, only: &[String]) -> Result<()> {
 pub fn print_discovery(d: &Discovery) {
     ui::heading(&format!("Discovered on {} ({:?})", d.source_host, d.source_platform));
     for (group, findings) in d.by_group() {
-        ui::group(group.title(), findings.len());
+        ui::group(group.title(), &findings.len().to_string());
         for f in findings {
             ui::item(&f.title);
         }
@@ -71,7 +71,7 @@ pub fn print_discovery(d: &Discovery) {
     }
 }
 
-fn hostname() -> String {
+pub fn hostname() -> String {
     std::process::Command::new("hostname")
         .output()
         .ok()
