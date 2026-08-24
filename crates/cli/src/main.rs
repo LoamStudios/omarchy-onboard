@@ -1,13 +1,13 @@
-//! `omamigrate` — Omarchy migration assistant.
+//! `omarchy-onboard` — Omarchy migration assistant.
 //!
-//! Source machine:  `omamigrate serve`           (advertise, wait for a pair request)
-//! Target machine:  `omamigrate migrate <code>`  (discover → propose → migrate)
+//! Source machine:  `omarchy-onboard serve`           (advertise, wait for a pair request)
+//! Target machine:  `omarchy-onboard migrate <code>`  (discover → propose → migrate)
 //!
 //! Either machine, offline:
-//!   `omamigrate checks`             list what Discover can look at
-//!   `omamigrate scan`               run checks here, write discovery.json
-//!   `omamigrate plan`               propose from a discovery, decide, write plan.json
-//!   `omamigrate apply --dry-run`    show what Migrate would do
+//!   `omarchy-onboard checks`             list what Discover can look at
+//!   `omarchy-onboard scan`               run checks here, write discovery.json
+//!   `omarchy-onboard plan`               propose from a discovery, decide, write plan.json
+//!   `omarchy-onboard apply --dry-run`    show what Migrate would do
 
 mod apply;
 mod plan;
@@ -19,7 +19,7 @@ use clap::{CommandFactory, Parser, Subcommand};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "omamigrate", version, about = "Omarchy migration assistant")]
+#[command(name = "omarchy-onboard", version, about = "Omarchy migration assistant")]
 struct Cli {
     #[command(subcommand)]
     cmd: Cmd,
@@ -69,7 +69,7 @@ enum Cmd {
     Serve,
     /// Run on the target machine: pair with a source and migrate from it.
     Migrate {
-        /// Pairing code shown by `omamigrate serve`.
+        /// Pairing code shown by `omarchy-onboard serve`.
         code: String,
     },
     /// Print the usage spec (for completions and docs).
@@ -88,11 +88,11 @@ fn main() -> Result<()> {
         Cmd::Scan { out, check } => scan::scan(&out, &check),
         Cmd::Plan { discovery, local, out, yes } => plan::plan(&discovery, local, &out, yes),
         Cmd::Apply { plan, dry_run } => apply::apply(&plan, dry_run),
-        Cmd::Serve => anyhow::bail!("pairing transport not implemented yet — use `omamigrate scan` and copy discovery.json"),
-        Cmd::Migrate { .. } => anyhow::bail!("pairing transport not implemented yet — use `omamigrate plan --discovery <file>`"),
+        Cmd::Serve => anyhow::bail!("pairing transport not implemented yet — use `omarchy-onboard scan` and copy discovery.json"),
+        Cmd::Migrate { .. } => anyhow::bail!("pairing transport not implemented yet — use `omarchy-onboard plan --discovery <file>`"),
         Cmd::Usage => {
             let mut buf = Vec::new();
-            clap_usage::generate(&mut Cli::command(), "omamigrate", &mut buf);
+            clap_usage::generate(&mut Cli::command(), "omarchy-onboard", &mut buf);
             print!("{}", String::from_utf8(buf)?);
             Ok(())
         }

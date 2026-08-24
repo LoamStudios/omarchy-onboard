@@ -3,7 +3,7 @@
 //! `cfg`, so the full catalogue is visible (and testable) everywhere; only
 //! `run` needs the real OS.
 
-use omamigrate_core::{Check, Platform};
+use omarchy_onboard_core::{Check, Platform};
 
 pub mod fs;
 pub mod macos;

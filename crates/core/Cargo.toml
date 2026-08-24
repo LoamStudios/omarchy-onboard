@@ -1,5 +1,5 @@
 [package]
-name = "omamigrate-core"
+name = "omarchy-onboard-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -3,7 +3,7 @@
 
 use crate::{plan::describe, ui};
 use anyhow::{Context, Result};
-use omamigrate_core::Plan;
+use omarchy_onboard_core::Plan;
 use std::path::Path;
 
 pub fn apply(path: &Path, dry_run: bool) -> Result<()> {

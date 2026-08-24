@@ -1,12 +1,12 @@
 [package]
-name = "omamigrate-rules"
+name = "omarchy-onboard-rules"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 
 [dependencies]
-omamigrate-core.workspace = true
-omamigrate-checks.workspace = true
+omarchy-onboard-core.workspace = true
+omarchy-onboard-checks.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
