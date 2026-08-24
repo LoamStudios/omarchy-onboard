@@ -49,9 +49,9 @@ pub fn discover(only: &[String]) -> Result<Discovery> {
     omarchy_onboard_topics::discover(&ctx, &hostname(), only)
 }
 
-pub fn scan(out: &Path, only: &[String]) -> Result<()> {
+pub fn scan(out: &Path, only: &[String], verbose: bool) -> Result<()> {
     let discovery = discover(only)?;
-    print_discovery(&discovery);
+    print_discovery(&discovery, verbose);
     std::fs::write(out, serde_json::to_string_pretty(&discovery)?)
         .with_context(|| format!("writing {}", out.display()))?;
     println!(
@@ -62,16 +62,30 @@ pub fn scan(out: &Path, only: &[String]) -> Result<()> {
     Ok(())
 }
 
-pub fn print_discovery(d: &Discovery) {
+/// One line per group; every finding when `verbose`.
+pub fn print_discovery(d: &Discovery, verbose: bool) {
     ui::heading(&format!(
         "Discovered on {} ({:?})",
         d.source_host, d.source_platform
     ));
-    for (group, findings) in d.by_group() {
-        ui::group(group.title(), &findings.len().to_string());
-        for f in findings {
-            ui::item(&f.title);
+    if verbose {
+        for (group, findings) in d.by_group() {
+            ui::group(group.title(), &findings.len().to_string());
+            for f in findings {
+                ui::item(&f.title);
+            }
         }
+    } else {
+        let parts: Vec<String> = d
+            .by_group()
+            .iter()
+            .map(|(g, fs)| format!("{} {}", g.title(), console::style(fs.len()).bold()))
+            .collect();
+        println!("  {}", parts.join("  ·  "));
+        println!(
+            "  {}",
+            console::style("(--verbose lists every finding)").dim()
+        );
     }
     for (topic, err) in &d.topics_failed {
         println!("{} {topic}: {err}", console::style("failed").red());

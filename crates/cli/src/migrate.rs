@@ -16,12 +16,18 @@ pub fn connect(code: &str) -> Result<Client> {
     Ok(client)
 }
 
-pub fn migrate(code: &str, yes: bool, dry_run: bool, packages: Option<&Path>) -> Result<()> {
+pub fn migrate(
+    code: &str,
+    yes: bool,
+    dry_run: bool,
+    packages: Option<&Path>,
+    verbose: bool,
+) -> Result<()> {
     let mut client = connect(code)?;
 
     ui::heading("Discover");
     let discovery = client.discover(&[])?;
-    scan::print_discovery(&discovery);
+    scan::print_discovery(&discovery, verbose);
 
     ui::heading("Propose");
     let mut p = plan::propose(&discovery, packages)?;
@@ -34,6 +40,7 @@ pub fn migrate(code: &str, yes: bool, dry_run: bool, packages: Option<&Path>) ->
         let defaults: Vec<_> = p.actions().map(|pr| (pr.id.clone(), pr.default)).collect();
         p.decisions.extend(defaults);
     } else {
+        plan::print_notes(&p);
         plan::decide_interactively(&mut p)?;
     }
     plan::print_plan(&p);
@@ -41,7 +48,6 @@ pub fn migrate(code: &str, yes: bool, dry_run: bool, packages: Option<&Path>) ->
 
     ui::heading("Migrate");
     apply::run(&p, dry_run, &mut client)?;
-    plan::print_notes(&p);
     client.close();
     Ok(())
 }

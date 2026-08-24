@@ -47,6 +47,9 @@ enum Cmd {
         /// Only run these topic ids.
         #[arg(long)]
         topic: Vec<String>,
+        /// List every finding instead of a per-group summary.
+        #[arg(short, long)]
+        verbose: bool,
     },
     /// Propose: turn a discovery into a plan, interactively deciding what to accept.
     Plan {
@@ -96,6 +99,9 @@ enum Cmd {
         /// Package list to use instead of the live pacman index.
         #[arg(long)]
         packages: Option<PathBuf>,
+        /// List every finding instead of a per-group summary.
+        #[arg(short, long)]
+        verbose: bool,
     },
     /// Print the usage spec (for completions and docs).
     #[command(hide = true)]
@@ -110,7 +116,11 @@ fn main() -> Result<()> {
 
     match Cli::parse().cmd {
         Cmd::Topics { all } => scan::list_topics(all),
-        Cmd::Scan { out, topic } => scan::scan(&out, &topic),
+        Cmd::Scan {
+            out,
+            topic,
+            verbose,
+        } => scan::scan(&out, &topic, verbose),
         Cmd::Plan {
             discovery,
             local,
@@ -129,7 +139,8 @@ fn main() -> Result<()> {
             yes,
             dry_run,
             packages,
-        } => migrate::migrate(&code, yes, dry_run, packages.as_deref()),
+            verbose,
+        } => migrate::migrate(&code, yes, dry_run, packages.as_deref(), verbose),
         Cmd::Usage => {
             let mut buf = Vec::new();
             clap_usage::generate(&mut Cli::command(), "omarchy-onboard", &mut buf);

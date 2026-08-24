@@ -38,6 +38,7 @@ pub fn plan(
         let defaults: Vec<_> = plan.actions().map(|p| (p.id.clone(), p.default)).collect();
         plan.decisions.extend(defaults);
     } else {
+        print_notes(&plan);
         decide_interactively(&mut plan)?;
     }
 
@@ -85,8 +86,8 @@ pub fn decide_interactively(plan: &mut Plan) -> Result<()> {
         for p in proposals {
             ms = ms.option(
                 DemandOption::new(p.id.clone())
-                    .label(&p.title)
-                    .description(&p.rationale)
+                    .label(&row_label(p))
+                    .description(&describe(p))
                     .selected(p.default == Decision::Accept),
             );
         }
@@ -176,4 +177,16 @@ fn describe_op(op: &Operation) -> String {
         Operation::RunCommand { argv } => format!("run {}", argv.join(" ")),
         Operation::Manual { instructions } => format!("manual: {instructions}"),
     }
+}
+
+/// "Install bat  ·  `bat` is the same tool, packaged for Arch." — rationale on
+/// every row, trimmed to the terminal width so the list stays scannable.
+fn row_label(p: &Proposal) -> String {
+    let width = console::Term::stdout().size().1 as usize;
+    let budget = width.saturating_sub(8).max(40);
+    let mut s = format!("{}  ·  {}", p.title, p.rationale);
+    if s.chars().count() > budget {
+        s = s.chars().take(budget - 1).collect::<String>() + "…";
+    }
+    s
 }
