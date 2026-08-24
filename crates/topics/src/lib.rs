@@ -14,14 +14,18 @@ use omarchy_onboard_core::{Discovery, Plan, Platform, SourceContext, TargetConte
 
 pub mod fs;
 pub mod homebrew;
+pub mod input;
 pub mod shell;
 pub mod ssh;
+pub mod vscode;
 
 pub fn all() -> Vec<Box<dyn Topic>> {
     vec![
         Box::new(homebrew::Homebrew),
         Box::new(shell::Shell),
         Box::new(ssh::Ssh),
+        Box::new(input::Input),
+        Box::new(vscode::VsCode),
     ]
 }
 

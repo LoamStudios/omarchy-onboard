@@ -158,3 +158,61 @@ fn every_topic_has_a_unique_id_and_at_least_one_source() {
     assert_eq!(ids.len(), topics.len(), "duplicate topic ids");
     assert!(topics.iter().all(|t| !t.meta().sources.is_empty()));
 }
+
+#[test]
+fn vscode_extensions_are_installed_not_copied_and_keybindings_rewritten() {
+    use omarchy_onboard_topics::vscode;
+    let ext = |id: &str| {
+        Finding::new(vscode::ID, Group::Editors, format!("extension/{id}"), id).with_value(
+            vscode::Extension {
+                id: id.into(),
+                version: None,
+            },
+        )
+    };
+    let kb = Finding::new(vscode::ID, Group::Editors, "keybindings", "kb").with_value(
+        vscode::ConfigFile {
+            content: "[{\"key\": \"cmd+p\"}]".into(),
+        },
+    );
+    let plan = plan_for(vec![ext("a.b"), ext("c.d"), kb], FakeIndex(vec![]));
+
+    let exts = plan
+        .proposals
+        .iter()
+        .find(|p| p.id == "vscode/extensions")
+        .unwrap();
+    assert_eq!(exts.operations.len(), 2);
+    assert!(exts.operations.iter().all(
+        |o| matches!(o, Operation::InstallEditorExtension { editor, .. } if editor == "vscode")
+    ));
+    assert_eq!(exts.findings.len(), 2);
+
+    let kb = plan
+        .proposals
+        .iter()
+        .find(|p| p.id == "vscode/keybindings")
+        .unwrap();
+    assert!(
+        matches!(&kb.operations[..], [Operation::WriteConfig { content, .. }] if content.contains("ctrl+p"))
+    );
+}
+
+#[test]
+fn input_settings_become_one_hyprland_append() {
+    use omarchy_onboard_topics::input;
+    let f =
+        Finding::new(input::ID, Group::Input, "settings", "s").with_value(input::InputSettings {
+            repeat_delay_ms: Some(150),
+            repeat_rate_hz: Some(66),
+            natural_scroll: Some(false),
+            tap_to_click: Some(true),
+            caps_lock: Some(input::CapsLock::Control),
+        });
+    let plan = plan_for(vec![f], FakeIndex(vec![]));
+    assert_eq!(plan.proposals.len(), 1);
+    let p = &plan.proposals[0];
+    assert!(matches!(&p.operations[..],
+        [Operation::WriteConfig { path, content, mode: omarchy_onboard_core::ConfigMode::Append }]
+            if path.ends_with(".config/hypr/input.conf") && content.contains("caps:ctrl_modifier") && content.contains("natural_scroll = false")));
+}

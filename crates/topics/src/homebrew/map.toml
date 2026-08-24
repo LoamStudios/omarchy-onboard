@@ -55,7 +55,7 @@ tree = "tree"
 watch = { manual = "Part of procps-ng, installed by default." }
 
 [cask]
-visual-studio-code = { pacman = "code", note = "Open-source build (Code - OSS); or `aur = visual-studio-code-bin` for Microsoft's" }
+visual-studio-code = { aur = "visual-studio-code-bin", note = "Microsoft build, so the extension marketplace works; `code` (Code - OSS) is the repo alternative" }
 cursor = { aur = "cursor-bin" }
 zed = "zed"
 ghostty = "ghostty"
